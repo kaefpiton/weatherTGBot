@@ -1,15 +1,13 @@
 package postgres
 
-
 type Sticker struct {
-	Stickers_id 		int
-	Stickers_name 		string
-	Stickers_code  		string
-	Stickers_type_id 	string
+	Stickers_id      int
+	Stickers_name    string
+	Stickers_code    string
+	Stickers_type_id string
 }
 
-
-func (db *DB)GetStickersCodesByType(stickerTypeName string) ([]string, error) {
+func (db *DB) GetStickersCodesByType(stickerTypeName string) ([]string, error) {
 	var stickerCodes []string
 
 	rows, err := db.Query(
@@ -23,11 +21,11 @@ func (db *DB)GetStickersCodesByType(stickerTypeName string) ([]string, error) {
 
 	stiskers := []*Sticker{}
 
-	for rows.Next(){
+	for rows.Next() {
 		sticker := new(Sticker)
 		err := rows.Scan(&sticker.Stickers_code)
-		if err != nil{
-			return nil,err
+		if err != nil {
+			return nil, err
 		}
 		stiskers = append(stiskers, sticker)
 	}
@@ -36,5 +34,5 @@ func (db *DB)GetStickersCodesByType(stickerTypeName string) ([]string, error) {
 		stickerCodes = append(stickerCodes, s.Stickers_code)
 	}
 
-	return stickerCodes,nil
+	return stickerCodes, nil
 }
