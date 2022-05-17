@@ -9,34 +9,41 @@ import (
 //Стикеры для температуры
 func (b *Bot) sendTemperatureSticker(message *tgbotapi.Message) error {
 	temperature := b.weather.Main.Temp
+	const highTemp = 27
+	const normTemp = 16
+	const coldTemp = 0
 
 	switch {
-	case temperature > 27:
+	case temperature > highTemp:
 		{
 			return b.sendRandomSticker(message, b.getStickers("high temperature"))
 		}
-	case temperature > 16:
+	case temperature > normTemp:
 		{
 			return b.sendRandomSticker(message, b.getStickers("normal temperature"))
 		}
-	case temperature >= 0:
+	case temperature >= coldTemp:
 		{
 			return b.sendRandomSticker(message, b.getStickers("cold temperature"))
 		}
-	case temperature < 0:
+	case temperature < coldTemp:
 		{
 			return b.sendRandomSticker(message, b.getStickers("frost temperature"))
 		}
+
 	default:
-		return nil
+		{
+			return nil
+		}
 	}
 }
 
 //Стикеры для давления
 func (b *Bot) sendPressureSticker(message *tgbotapi.Message) error {
 	pressure := convertGpaToMMHG(b.weather.Main.GrndLevel)
+	const normalPressure = 760
 
-	if pressure > 760 {
+	if pressure > normalPressure {
 		return b.sendRandomSticker(message, b.getStickers("pressure high"))
 	} else {
 		return b.sendRandomSticker(message, b.getStickers("pressure normal"))
@@ -78,7 +85,6 @@ func (b Bot) getStickers(stickerType string) []string {
 }
 
 func (b *Bot) sendRandomSticker(message *tgbotapi.Message, stickers []string) error {
-
 	msg := tgbotapi.NewStickerShare(message.Chat.ID, stickers[rand.Intn(len(stickers))])
 	_, err := b.bot.Send(msg)
 	return err
