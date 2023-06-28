@@ -1,38 +1,37 @@
 package postgres
 
 import (
-"database/sql"
-"fmt"
-"time"
+	"database/sql"
+	"fmt"
+	"time"
 )
 
-
 type Users struct {
-	Users_id 					int64
-	Users_firstname				string
-	Users_lastname				string
-	Users_chatid				int64
-	Users_date_of_last_usage	time.Time
+	Users_id                 int64
+	Users_firstname          string
+	Users_lastname           string
+	Users_chatid             int64
+	Users_date_of_last_usage time.Time
 }
 
+func (db *DB) InsertUser(usersFirstname, usersLastname string, chatid int64) error {
+	userID, err := getUserIDByChatID(db, chatid)
 
-func (db *DB)InsertUser(usersFirstname, usersLastname string, chatid int64)error{
-	userID,err := getUserIDByChatID(db, chatid)
-
-	if err!= nil{
+	if err != nil {
 		return err
 	}
 
-	if userID == 0{
+	if userID == 0 {
+		//todo сил хватит лог прикрутить
 		fmt.Println("Создание нового пользователя")
 		return createUser(db, usersFirstname, usersLastname, chatid)
-	} else{
+	} else {
 		fmt.Println("Пользователь с chatid существует - меняем дату")
 		return updateUserDateOfLastUsage(db, userID)
 	}
 }
 
-func createUser(db*DB, usersFirstname, usersLastname string, chatid int64) error {
+func createUser(db *DB, usersFirstname, usersLastname string, chatid int64) error {
 	user := Users{}
 
 	user.Users_firstname = usersFirstname
@@ -44,19 +43,18 @@ func createUser(db*DB, usersFirstname, usersLastname string, chatid int64) error
 		user.Users_firstname,
 		user.Users_lastname,
 		user.Users_chatid,
-		user.Users_date_of_last_usage )
+		user.Users_date_of_last_usage)
 	return err
 }
-func updateUserDateOfLastUsage(db*DB, userID int64) error{
 
+func updateUserDateOfLastUsage(db *DB, userID int64) error {
 	_, err := db.Exec("UPDATE users SET users_date_of_last_usage = $1 WHERE users_id = $2",
 		time.Now(),
 		userID)
 
 	return err
 }
-func getUserIDByChatID (db *DB, chatid int64) (int64, error)  {
-
+func getUserIDByChatID(db *DB, chatid int64) (int64, error) {
 	stmt, err := db.Prepare("SELECT users_id FROM users WHERE users_chatid = $1")
 	if err != nil {
 		return 0, err

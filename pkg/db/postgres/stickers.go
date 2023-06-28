@@ -11,7 +11,7 @@ func (db *DB) GetStickersCodesByType(stickerTypeName string) ([]string, error) {
 	var stickerCodes []string
 
 	rows, err := db.Query(
-		`SELECT stickers_code FROM stickers INNER JOIN stickertype on stickertype_id = stickers.stickers_type_id where stickerType_name = $1`,
+		`SELECT stickers_code FROM stickers  where stickers_type_id = $1`,
 		stickerTypeName)
 
 	if err != nil {

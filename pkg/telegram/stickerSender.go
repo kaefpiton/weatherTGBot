@@ -2,11 +2,10 @@ package telegram
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"log"
 	"math/rand"
 )
 
-//Стикеры для температуры
+// Стикеры для температуры
 func (b *Bot) sendTemperatureSticker(message *tgbotapi.Message) error {
 	temperature := b.weather.Main.Temp
 
@@ -32,7 +31,7 @@ func (b *Bot) sendTemperatureSticker(message *tgbotapi.Message) error {
 	}
 }
 
-//Стикеры для давления
+// Стикеры для давления
 func (b *Bot) sendPressureSticker(message *tgbotapi.Message) error {
 	pressure := convertGpaToMMHG(b.weather.Main.GrndLevel)
 
@@ -43,7 +42,7 @@ func (b *Bot) sendPressureSticker(message *tgbotapi.Message) error {
 	}
 }
 
-//Стикеры скорости для ветра
+// Стикеры скорости для ветра
 func (b *Bot) sendWindSpeedSticker(message *tgbotapi.Message) error {
 	windSpeed := b.weather.Wind.Speed
 	const highWindSpeed = 14
@@ -69,16 +68,15 @@ func (b *Bot) sendWindSpeedSticker(message *tgbotapi.Message) error {
 	}
 }
 
-func (b Bot) getStickers(stickerType string) []string {
+func (b *Bot) getStickers(stickerType string) []string {
 	stickers, err := b.db.GetStickersCodesByType(stickerType)
 	if err != nil {
-		log.Printf("Stickers not found from db")
+		b.log.Error("Stickers not found from db")
 	}
 	return stickers
 }
 
 func (b *Bot) sendRandomSticker(message *tgbotapi.Message, stickers []string) error {
-
 	msg := tgbotapi.NewStickerShare(message.Chat.ID, stickers[rand.Intn(len(stickers))])
 	_, err := b.bot.Send(msg)
 	return err

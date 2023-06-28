@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "botDB"
+      POSTGRES_USER: "adminDB"
+      POSTGRES_PASSWORD: "adminDB"
+    ports:
+      - "5432:5432"

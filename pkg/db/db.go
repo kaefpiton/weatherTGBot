@@ -5,8 +5,9 @@ type Datastore interface {
 	stickersInterface
 }
 
+// todo вынести в usecase
 type usersInterface interface {
-	InsertUser(usersFirstname, usersLastname string, chatid int64)error
+	InsertUser(usersFirstname, usersLastname string, chatId int64) error
 }
 
 type stickersInterface interface {

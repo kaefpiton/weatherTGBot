@@ -1,13 +1,13 @@
 package postgres
 
 import "database/sql"
-import _"github.com/lib/pq"
+import _ "github.com/lib/pq"
 
 type DB struct {
 	*sql.DB
 }
 
-func NewDB(dataSourceName string)(*DB, error)  {
+func NewDBConnection(dataSourceName string) (*DB, error) {
 	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
 		return nil, err
