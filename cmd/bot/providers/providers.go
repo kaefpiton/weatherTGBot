@@ -6,11 +6,12 @@ import (
 	"weatherTGBot/pkg/db"
 	"weatherTGBot/pkg/db/postgres"
 	"weatherTGBot/pkg/logger"
+	"weatherTGBot/pkg/logger/zerolog"
 	"weatherTGBot/pkg/telegram"
 )
 
 func ProvideConsoleLogger(cnf config.Config) logger.Logger {
-	return logger.NewZeroLog(os.Stderr, cnf.Logger.Lvl)
+	return zerolog.NewZeroLog(os.Stderr, cnf.Logger.Lvl)
 }
 
 func ProvideFileLogger(cnf config.Config) (logger.Logger, func(), error) {
@@ -30,7 +31,7 @@ func ProvideFileLogger(cnf config.Config) (logger.Logger, func(), error) {
 		ioWriter = logfile
 	}
 
-	return logger.NewZeroLog(ioWriter, cnf.Logger.Lvl), closeFn, nil
+	return zerolog.NewZeroLog(ioWriter, cnf.Logger.Lvl), closeFn, nil
 }
 
 func ProvideTgBotRepo(cnf config.Config) (db.TgBotRepo, func(), error) {
