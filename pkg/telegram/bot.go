@@ -7,19 +7,23 @@ import (
 )
 
 type Bot struct {
-	bot        *tgbotapi.BotAPI
-	weatherApi WeatherApi
-	db         db.TgBotRepo
-	log        logger.Logger
+	bot            *tgbotapi.BotAPI
+	commandHandler commandHandler
+	weatherApi     WeatherApi
+	db             db.TgBotRepo
+	log            logger.Logger
 }
 
 func NewBot(bot *tgbotapi.BotAPI, weatherApi WeatherApi, db db.TgBotRepo, log logger.Logger) *Bot {
-	return &Bot{
+	tgbot := &Bot{
 		bot:        bot,
 		db:         db,
 		log:        log,
 		weatherApi: weatherApi,
 	}
+	tgbot.commandHandler = newCommandHandlerImpl(bot, db, log)
+
+	return tgbot
 }
 
 func (b *Bot) Start() error {
@@ -54,7 +58,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 		}
 
 		if update.Message.IsCommand() { // обрабатываем команду
-			b.handleCommand(update.Message)
+			b.commandHandler.handleCommand(update.Message)
 			continue
 		}
 		b.handleMessage(update.Message)
