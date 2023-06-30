@@ -59,7 +59,7 @@ func initService(cnf config.Config) (func(), error) {
 	}
 
 	//logger
-	logger := providers.ProvideConsoleLogger(cnf.Logger.Lvl)
+	logger := providers.ProvideConsoleLogger(cnf)
 	TelegramBot := telegram.NewBot(bot, weather, tgBotRepository, logger)
 
 	if err = TelegramBot.Start(); err != nil {

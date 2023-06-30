@@ -27,7 +27,8 @@ type Config struct {
 	}
 
 	Logger struct {
-		Lvl string `json:"lvl"`
+		Lvl      string `json:"lvl"`
+		FilePath string `json:"filePath"`
 	}
 }
 

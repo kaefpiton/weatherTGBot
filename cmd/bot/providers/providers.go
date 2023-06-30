@@ -8,18 +8,16 @@ import (
 	"weatherTGBot/pkg/logger"
 )
 
-// todo сделать через конфиг
-func ProvideConsoleLogger(logLvl string) logger.Logger {
-	return logger.NewZeroLog(os.Stderr, logLvl)
+func ProvideConsoleLogger(cnf config.Config) logger.Logger {
+	return logger.NewZeroLog(os.Stderr, cnf.Logger.Lvl)
 }
 
-// todo сделать через конфиг
-func ProvideFileLogger(logLvl string, filePath string) (logger.Logger, func(), error) {
+func ProvideFileLogger(cnf config.Config) (logger.Logger, func(), error) {
 	var ioWriter = os.Stdout
 	var closeFn = func() {}
 
-	if filePath != "" {
-		logfile, err := os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0775)
+	if cnf.Logger.FilePath != "" {
+		logfile, err := os.OpenFile(cnf.Logger.FilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0775)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -31,7 +29,7 @@ func ProvideFileLogger(logLvl string, filePath string) (logger.Logger, func(), e
 		ioWriter = logfile
 	}
 
-	return logger.NewZeroLog(ioWriter, logLvl), closeFn, nil
+	return logger.NewZeroLog(ioWriter, cnf.Logger.Lvl), closeFn, nil
 }
 
 func ProvideTgBotRepo(cnf config.Config) (db.TgBotRepo, func(), error) {
