@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"weatherTGBot/cmd/bot/config"
 	"weatherTGBot/cmd/bot/providers"
-	"weatherTGBot/pkg/db/postgres"
 	"weatherTGBot/pkg/telegram"
 )
 
@@ -40,28 +39,28 @@ func main() {
 
 func initService(cnf config.Config) (func(), error) {
 	//telegram
-	bot, err := tgbotapi.NewBotAPI(cnf.Telegram.APIKey)
+	//todo сделать провайдеров
+	bot, err := tgbotapi.NewBotAPI(cnf.TelegramApi.APIKey)
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = cnf.Telegram.Debug
+	bot.Debug = cnf.TelegramApi.Debug
 
 	//weather API
-	weather, err := owm.NewCurrent(cnf.Weather.Unit, cnf.Weather.Lang, cnf.Weather.APIKey)
+	weather, err := owm.NewCurrent(cnf.WeatherApi.Unit, cnf.WeatherApi.Lang, cnf.WeatherApi.APIKey)
 	if err != nil {
 		return nil, err
 	}
 
-	//Postgres
-	db, err := postgres.NewDBConnection(config.GetPgDsn(cnf))
+	//TGBotRepository
+	tgBotRepository, DBcloser, err := providers.ProvideTgBotRepo(cnf)
 	if err != nil {
 		return nil, err
-		//log.Panic(err)
 	}
 
 	//logger
 	logger := providers.ProvideConsoleLogger(cnf.Logger.Lvl)
-	TelegramBot := telegram.NewBot(bot, weather, db, logger)
+	TelegramBot := telegram.NewBot(bot, weather, tgBotRepository, logger)
 
 	if err = TelegramBot.Start(); err != nil {
 		return nil, err
@@ -70,8 +69,8 @@ func initService(cnf config.Config) (func(), error) {
 	var cleaner = func() {
 		fmt.Println("Start cleaning")
 		TelegramBot.Stop()
-		db.Close()
-		//Если юзать логгер с файлом, то чистить сессию тоже
+		DBcloser()
+		//Если юзать логгер с файлом, то закрывать сессию тоже
 	}
 
 	return cleaner, nil

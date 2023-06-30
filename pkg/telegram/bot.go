@@ -10,11 +10,11 @@ import (
 type Bot struct {
 	bot     *tgbotapi.BotAPI
 	weather *openweathermap.CurrentWeatherData
-	db      db.Datastore
+	db      db.TgBotRepo
 	log     logger.Logger
 }
 
-func NewBot(bot *tgbotapi.BotAPI, weather *openweathermap.CurrentWeatherData, db db.Datastore, log logger.Logger) *Bot {
+func NewBot(bot *tgbotapi.BotAPI, weather *openweathermap.CurrentWeatherData, db db.TgBotRepo, log logger.Logger) *Bot {
 	return &Bot{
 		bot:     bot,
 		weather: weather,

@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	DataBase struct {
+	Repository struct {
 		User     string `json:"user"`
 		Password string `json:"password"`
 		Host     string `json:"host"`
@@ -16,12 +16,12 @@ type Config struct {
 		SSLMode  string `json:"ssl_mode"`
 	}
 
-	Weather struct {
+	WeatherApi struct {
 		APIKey string `json:"weather_api_key"`
 		Unit   string `json:"unit"`
 		Lang   string `json:"lang"`
 	}
-	Telegram struct {
+	TelegramApi struct {
 		APIKey string `json:"telegram_api_key"`
 		Debug  bool   `json:"debug"`
 	}
@@ -48,9 +48,9 @@ func LoadConfiguration(file string) Config {
 
 func GetPgDsn(cnf Config) string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cnf.DataBase.Host,
-		cnf.DataBase.Port,
-		cnf.DataBase.User,
-		cnf.DataBase.Password,
-		cnf.DataBase.DBName)
+		cnf.Repository.Host,
+		cnf.Repository.Port,
+		cnf.Repository.User,
+		cnf.Repository.Password,
+		cnf.Repository.DBName)
 }

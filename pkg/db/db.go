@@ -1,15 +1,15 @@
 package db
 
-type Datastore interface {
-	usersInterface
-	stickersInterface
+type TgBotRepo interface {
+	usersStore
+	stickersStore
 }
 
 // todo вынести в usecase
-type usersInterface interface {
-	InsertUser(usersFirstname, usersLastname string, chatId int64) error
+type usersStore interface {
+	InsertUser(userFirstname, usersLastname string, chatId int64) error
 }
 
-type stickersInterface interface {
+type stickersStore interface {
 	GetStickersCodesByType(stickerTypeName string) ([]string, error)
 }
