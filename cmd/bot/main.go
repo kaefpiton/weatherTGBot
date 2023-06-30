@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	owm "github.com/briandowns/openweathermap"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"os"
@@ -47,7 +46,7 @@ func initService(cnf config.Config) (func(), error) {
 	bot.Debug = cnf.TelegramApi.Debug
 
 	//weather API
-	weather, err := owm.NewCurrent(cnf.WeatherApi.Unit, cnf.WeatherApi.Lang, cnf.WeatherApi.APIKey)
+	weatherApi, err := providers.ProvideWeatherApi(cnf)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +59,7 @@ func initService(cnf config.Config) (func(), error) {
 
 	//logger
 	logger := providers.ProvideConsoleLogger(cnf)
-	TelegramBot := telegram.NewBot(bot, weather, tgBotRepository, logger)
+	TelegramBot := telegram.NewBot(bot, weatherApi, tgBotRepository, logger)
 
 	if err = TelegramBot.Start(); err != nil {
 		return nil, err

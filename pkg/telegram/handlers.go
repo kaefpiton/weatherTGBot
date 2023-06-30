@@ -42,7 +42,8 @@ func (b *Bot) handleMessageCity(message *tgbotapi.Message) error {
 	}
 
 	if city, ok := cities[selectedCity]; ok {
-		if err := b.setCity(city); err != nil {
+		weatherOptions := NewWeatherOptions(city)
+		if err := b.weatherApi.SetOptions(weatherOptions); err != nil {
 			return err
 		}
 	} else {
@@ -57,9 +58,4 @@ func (b *Bot) handleMessageDefault(message *tgbotapi.Message) error {
 	msg := tgbotapi.NewMessage(message.Chat.ID, "Вы не выбрали город ! Пожалуйста, выберете город на клавиатуре")
 	_, err := b.bot.Send(msg)
 	return err
-}
-
-// Отправляет выбранный город API погоды
-func (b *Bot) setCity(city string) error {
-	return b.weather.CurrentByName(city)
 }
