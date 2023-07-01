@@ -7,23 +7,21 @@ type Sticker struct {
 	Stickers_type_id string
 }
 
-func (db *DB) GetStickersCodesByType(stickerTypeName string) ([]string, error) {
+func (db *DB) GetStickersCodesByType(stickerType string) ([]string, error) {
 	var stickerCodes []string
 
-	rows, err := db.Query(
-		`SELECT stickers_code FROM stickers  where stickers_type_id = $1`,
-		stickerTypeName)
-
+	query := `SELECT code FROM stickers  where sticker_type = $1`
+	rows, err := db.Query(query, stickerType)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	stiskers := []*Sticker{}
+	var stiskers []*Sticker
 
 	for rows.Next() {
 		sticker := new(Sticker)
-		err := rows.Scan(&sticker.Stickers_code)
+		err = rows.Scan(&sticker.Stickers_code)
 		if err != nil {
 			return nil, err
 		}

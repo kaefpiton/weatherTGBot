@@ -7,11 +7,10 @@ import (
 )
 
 type Users struct {
-	Users_id                 int64
-	Users_firstname          string
-	Users_lastname           string
-	Users_chatid             int64
-	Users_date_of_last_usage time.Time
+	ID        int64
+	Firstname string
+	Lastname  string
+	ChatID    int64
 }
 
 func (db *DB) InsertUser(usersFirstname, usersLastname string, chatid int64) error {
@@ -21,55 +20,52 @@ func (db *DB) InsertUser(usersFirstname, usersLastname string, chatid int64) err
 		return err
 	}
 
-	if userID == 0 {
-		//todo сил хватит лог прикрутить
+	if userID == -1 {
+		//todo прикрутить лог
 		fmt.Println("Создание нового пользователя")
 		return createUser(db, usersFirstname, usersLastname, chatid)
 	} else {
-		fmt.Println("Пользователь с chatid существует - меняем дату")
-		return updateUserDateOfLastUsage(db, userID)
+		fmt.Println("Пользователь с chatID существует - меняем дату")
+		return updateLastUsage(db, userID)
 	}
 }
 
-func createUser(db *DB, usersFirstname, usersLastname string, chatid int64) error {
-	user := Users{}
+func createUser(db *DB, usersFirstname, usersLastname string, chatID int64) error {
+	var user Users
 
-	user.Users_firstname = usersFirstname
-	user.Users_lastname = usersLastname
-	user.Users_chatid = chatid
-	user.Users_date_of_last_usage = time.Now()
+	user.Firstname = usersFirstname
+	user.Lastname = usersLastname
+	user.ChatID = chatID
 
-	_, err := db.Exec("INSERT INTO users (users_firstname, users_lastname,users_chatid, users_date_of_last_usage) values ($1, $2, $3, $4)",
-		user.Users_firstname,
-		user.Users_lastname,
-		user.Users_chatid,
-		user.Users_date_of_last_usage)
+	_, err := db.Exec("INSERT INTO users (firstname, lastname, chat_id) values ($1, $2, $3)",
+		user.Firstname,
+		user.Lastname,
+		user.ChatID)
 	return err
 }
 
-func updateUserDateOfLastUsage(db *DB, userID int64) error {
-	_, err := db.Exec("UPDATE users SET users_date_of_last_usage = $1 WHERE users_id = $2",
+func updateLastUsage(db *DB, userID int64) error {
+	_, err := db.Exec("UPDATE users SET last_usage = $1 WHERE chat_id = $2",
 		time.Now(),
 		userID)
 
 	return err
 }
-func getUserIDByChatID(db *DB, chatid int64) (int64, error) {
-	stmt, err := db.Prepare("SELECT users_id FROM users WHERE users_chatid = $1")
+func getUserIDByChatID(db *DB, chatID int64) (int64, error) {
+	stmt, err := db.Prepare("SELECT ID FROM users WHERE chat_id = $1")
 	if err != nil {
 		return 0, err
 	}
 
 	var user Users
 
-	err = stmt.QueryRow(chatid).Scan(&user.Users_id)
+	err = stmt.QueryRow(chatID).Scan(&user.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			//Обработка пустого результата
-			return 0, nil
+			return -1, nil
 		}
 
-		return 0, err
+		return -1, err
 	}
-	return chatid, nil
+	return chatID, nil
 }
