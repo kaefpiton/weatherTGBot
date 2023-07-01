@@ -17,19 +17,13 @@ func (db *DB) GetStickersCodesByType(stickerType string) ([]string, error) {
 	}
 	defer rows.Close()
 
-	var stickers []*Sticker
-
 	for rows.Next() {
-		sticker := new(Sticker)
-		err = rows.Scan(&sticker.code)
+		var stickerCode string
+		err = rows.Scan(&stickerCode)
 		if err != nil {
 			return nil, err
 		}
-		stickers = append(stickers, sticker)
-	}
-
-	for _, s := range stickers {
-		stickerCodes = append(stickerCodes, s.code)
+		stickerCodes = append(stickerCodes, stickerCode)
 	}
 
 	return stickerCodes, nil
