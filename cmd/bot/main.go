@@ -39,6 +39,9 @@ func main() {
 func initService(cnf config.Config) (func(), error) {
 	//telegram
 	//todo сделать провайдеров
+	//logger
+	logger := providers.ProvideConsoleLogger(cnf)
+
 	bot, err := tgbotapi.NewBotAPI(cnf.TelegramApi.APIKey)
 	if err != nil {
 		return nil, err
@@ -52,13 +55,11 @@ func initService(cnf config.Config) (func(), error) {
 	}
 
 	//TGBotRepository
-	tgBotRepository, DBcloser, err := providers.ProvideTgBotRepo(cnf)
+	tgBotRepository, DBcloser, err := providers.ProvideTgBotRepo(cnf, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	//logger
-	logger := providers.ProvideConsoleLogger(cnf)
 	TelegramBot := telegram.NewBot(bot, weatherApi, tgBotRepository, logger)
 
 	if err = TelegramBot.Start(); err != nil {

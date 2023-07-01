@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
@@ -21,16 +20,16 @@ func (db *DB) InsertUser(firstname, lastname string, chatID int64) error {
 	}
 
 	if userID == -1 {
-		//todo прикрутить лог
-		fmt.Println("Создание нового пользователя")
 		return createUser(db, firstname, lastname, chatID)
 	} else {
-		fmt.Println("Пользователь с chatID существует - меняем дату")
+		db.log.Info("user already exist. Update last usage")
 		return updateLastUsage(db, userID)
 	}
 }
 
 func createUser(db *DB, firstname, lastname string, chatID int64) error {
+	db.log.Info("create new user")
+
 	user := User{
 		Firstname: firstname,
 		Lastname:  lastname,

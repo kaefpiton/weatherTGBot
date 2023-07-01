@@ -34,10 +34,10 @@ func ProvideFileLogger(cnf config.Config) (logger.Logger, func(), error) {
 	return zerolog.NewZeroLog(ioWriter, cnf.Logger.Lvl), closeFn, nil
 }
 
-func ProvideTgBotRepo(cnf config.Config) (db.TgBotRepo, func(), error) {
+func ProvideTgBotRepo(cnf config.Config, log logger.Logger) (db.TgBotRepo, func(), error) {
 	var closeFn = func() {}
 
-	repo, err := postgres.NewDBConnection(config.GetPgDsn(cnf))
+	repo, err := postgres.NewDBConnection(config.GetPgDsn(cnf), log)
 	if err != nil {
 		return nil, nil, err
 	}
