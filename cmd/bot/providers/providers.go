@@ -37,7 +37,6 @@ func ProvideFileLogger(cnf config.Config) (logger.Logger, func(), error) {
 func ProvideTgBotRepo(cnf config.Config) (db.TgBotRepo, func(), error) {
 	var closeFn = func() {}
 
-	//todo добавить в dsn еще конфигов
 	repo, err := postgres.NewDBConnection(config.GetPgDsn(cnf))
 	if err != nil {
 		return nil, nil, err
