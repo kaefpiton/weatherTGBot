@@ -9,6 +9,7 @@ import (
 type Bot struct {
 	bot            *tgbotapi.BotAPI
 	commandHandler commandHandler
+	messageHandler messageHandler
 	weatherApi     WeatherApi
 	db             db.TgBotRepo
 	log            logger.Logger
@@ -22,12 +23,14 @@ func NewBot(bot *tgbotapi.BotAPI, weatherApi WeatherApi, db db.TgBotRepo, log lo
 		weatherApi: weatherApi,
 	}
 	tgbot.commandHandler = newCommandHandlerImpl(bot, db, log)
+	//todo уйти от зввисимости tgbot
+	tgbot.messageHandler = newMessageHandlerImpl(tgbot, bot, weatherApi, db, log)
 
 	return tgbot
 }
 
 func (b *Bot) Start() error {
-	b.log.Info("Authorized on account %s", b.bot.Self.UserName)
+	b.log.Infof("Authorized on account:", b.bot.Self.UserName)
 
 	updates, err := b.initUpdatesChannel()
 	if err != nil {
@@ -40,6 +43,7 @@ func (b *Bot) Start() error {
 }
 
 func (b *Bot) Stop() {
+	//todo change log
 	b.log.Info("stop tg bot")
 	b.bot.StopReceivingUpdates()
 }
@@ -53,14 +57,22 @@ func (b *Bot) initUpdatesChannel() (tgbotapi.UpdatesChannel, error) {
 
 func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 	for update := range updates {
-		if update.Message == nil { // ignore any non-Message Updates
+		// ignore any non-Message Updates
+		if update.Message == nil {
 			continue
 		}
 
-		if update.Message.IsCommand() { // обрабатываем команду
-			b.commandHandler.handleCommand(update.Message)
+		if update.Message.IsCommand() {
+			err := b.commandHandler.handleCommand(update.Message)
+			if err != nil {
+				b.log.Error(err)
+			}
 			continue
 		}
-		b.handleMessage(update.Message)
+
+		err := b.messageHandler.handleMessage(update.Message)
+		if err != nil {
+			b.log.Error(err)
+		}
 	}
 }

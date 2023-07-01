@@ -45,6 +45,20 @@ func (h *commandHandlerImpl) handleCommand(message *tgbotapi.Message) error {
 	}
 }
 
+// Инициализирует клавиатуру с городами
+// todo подумать как можно запилить клавиатуру в 2 строки
+func initCitiesKeyboard() tgbotapi.ReplyKeyboardMarkup {
+	var Keyboard = tgbotapi.NewReplyKeyboard()
+
+	for key, _ := range cities {
+		Keyboard.Keyboard = append(Keyboard.Keyboard, tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton(key),
+		))
+	}
+
+	return Keyboard
+}
+
 // Обрабатывает команду /start
 func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error {
 	h.log.Info("Handle start command:", message)
