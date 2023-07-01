@@ -10,7 +10,7 @@ type Sticker struct {
 func (db *DB) GetStickersCodesByType(stickerType string) ([]string, error) {
 	var stickerCodes []string
 
-	query := `SELECT code FROM stickers  where sticker_type = $1`
+	query := `SELECT code FROM stickers JOIN sticker_types st on stickers.type_id = st.id where st.title= $1`
 	rows, err := db.Query(query, stickerType)
 	if err != nil {
 		return nil, err
