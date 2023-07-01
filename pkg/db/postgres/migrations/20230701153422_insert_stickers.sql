@@ -1,15 +1,19 @@
 -- +goose Up
 -- +goose StatementBegin
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker1','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','high temperature');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker2','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','normal temperature');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker3','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','cold temperature');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker4','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','frost temperature');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker5','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','pressure high');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker6','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','pressure normal');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker7','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','high wind');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker8','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','high wind');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker9','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','normal wind');
-INSERT INTO stickers (title, code, sticker_type) VALUES('sticker10','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','low wind');
+-- temperature set
+INSERT INTO stickers (title, code, sticker_type) VALUES('hot pepper','CAACAgIAAxkBAAMxYUSvqEM2N9kh3CxIi3aB3vFvdFcAAiQ4AALpVQUY4gY1Rhbj6zYgBA','high temperature');
+INSERT INTO stickers (title, code, sticker_type) VALUES('ok Peach','CAACAgIAAxkBAAMzYUSwX6aCuOQ2viVi4IuJydC_07wAAmk8AALpVQUYKm9sk-lnnEggBA','normal temperature');
+INSERT INTO stickers (title, code, sticker_type) VALUES('coquettish kitty','CAACAgIAAxkBAAMvYUDutIbJCmDgh8MgG3R9yNtjCTAAAjsNAAIHAAEhSlDQHnMITvqzIAQ','cold temperature');
+INSERT INTO stickers (title, code, sticker_type) VALUES('cold thermometer','xWxjKo_XdRUryen7IAAm4DAAJji0YMsPWPsDU5IhsgBA-lnnEggBA','frost temperature');
+
+-- pressure set
+INSERT INTO stickers (title, code, sticker_type) VALUES('panicking crab','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','pressure high');
+INSERT INTO stickers (title, code, sticker_type) VALUES('ok crab','CAACAgIAAxkBAAMXYUC8vhd01veJTcwJeBFFtH83nPEAAqcAAxZCawrZczRKlDRzKSAE','pressure normal');
+
+-- wind set
+INSERT INTO stickers (title, code, sticker_type) VALUES('panicking lama','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','high wind');
+INSERT INTO stickers (title, code, sticker_type) VALUES('ok tiger','CAACAgIAAxkBAAMfYUDDPZJqpvnGhXS0IEjsn8hBcv4AApYAAztgJBStCvJmBZEf3yAE','normal wind');
+INSERT INTO stickers (title, code, sticker_type) VALUES('calm kitty','CAACAgIAAxkBAAMnYUDsTQABlTCRAAHMrhr1oE2THN_JGAACTwADWbv8JXAeFS_YqOxqIAQ','low wind');
 -- +goose StatementEnd
 
 -- +goose Down
