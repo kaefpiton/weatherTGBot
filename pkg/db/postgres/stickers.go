@@ -1,10 +1,10 @@
 package postgres
 
 type Sticker struct {
-	Stickers_id      int
-	Stickers_name    string
-	Stickers_code    string
-	Stickers_type_id string
+	ID          int
+	title       string
+	code        string
+	stickerType string
 }
 
 func (db *DB) GetStickersCodesByType(stickerType string) ([]string, error) {
@@ -17,19 +17,19 @@ func (db *DB) GetStickersCodesByType(stickerType string) ([]string, error) {
 	}
 	defer rows.Close()
 
-	var stiskers []*Sticker
+	var stickers []*Sticker
 
 	for rows.Next() {
 		sticker := new(Sticker)
-		err = rows.Scan(&sticker.Stickers_code)
+		err = rows.Scan(&sticker.code)
 		if err != nil {
 			return nil, err
 		}
-		stiskers = append(stiskers, sticker)
+		stickers = append(stickers, sticker)
 	}
 
-	for _, s := range stiskers {
-		stickerCodes = append(stickerCodes, s.Stickers_code)
+	for _, s := range stickers {
+		stickerCodes = append(stickerCodes, s.code)
 	}
 
 	return stickerCodes, nil
