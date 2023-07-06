@@ -4,16 +4,14 @@ import (
 	"database/sql"
 	"time"
 	"weatherTGBot/internal/config"
-	"weatherTGBot/pkg/logger"
 )
 import _ "github.com/lib/pq"
 
 type DB struct {
 	*sql.DB
-	log logger.Logger
 }
 
-func NewDBConnection(cnf *config.Config, log logger.Logger) (*DB, error) {
+func NewDBConnection(cnf *config.Config) (*DB, error) {
 	db, err := sql.Open("postgres", cnf.GetPgDsn())
 	if err != nil {
 		return nil, err
@@ -29,6 +27,5 @@ func NewDBConnection(cnf *config.Config, log logger.Logger) (*DB, error) {
 
 	return &DB{
 		db,
-		log,
 	}, nil
 }

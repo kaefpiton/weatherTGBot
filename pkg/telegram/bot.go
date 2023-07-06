@@ -2,7 +2,7 @@ package telegram
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"weatherTGBot/pkg/db"
+	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/pkg/logger"
 )
 
@@ -11,20 +11,20 @@ type Bot struct {
 	commandHandler commandHandler
 	messageHandler messageHandler
 	weatherApi     WeatherApi
-	db             db.TgBotRepo
+	repo           *repository.TgBotRepository
 	log            logger.Logger
 }
 
-func NewBot(bot *tgbotapi.BotAPI, weatherApi WeatherApi, db db.TgBotRepo, log logger.Logger) *Bot {
+func NewBot(bot *tgbotapi.BotAPI, weatherApi WeatherApi, repo *repository.TgBotRepository, log logger.Logger) *Bot {
 	tgbot := &Bot{
 		bot:        bot,
-		db:         db,
+		repo:       repo,
 		log:        log,
 		weatherApi: weatherApi,
 	}
-	tgbot.commandHandler = newCommandHandlerImpl(bot, db, log)
+	tgbot.commandHandler = newCommandHandlerImpl(bot, repo, log)
 	//todo уйти от зввисимости tgbot
-	tgbot.messageHandler = newMessageHandlerImpl(tgbot, bot, weatherApi, db, log)
+	tgbot.messageHandler = newMessageHandlerImpl(tgbot, bot, weatherApi, repo, log)
 
 	return tgbot
 }

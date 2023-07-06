@@ -3,7 +3,7 @@ package telegram
 import (
 	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"weatherTGBot/pkg/db"
+	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/pkg/logger"
 )
 
@@ -15,12 +15,12 @@ type messageHandlerImpl struct {
 	bot        *Bot
 	botApi     *tgbotapi.BotAPI
 	weatherApi WeatherApi
-	repo       db.TgBotRepo
+	repo       *repository.TgBotRepository
 	log        logger.Logger
 }
 
 // todo уйти от зависимости bot
-func newMessageHandlerImpl(bot *Bot, botApi *tgbotapi.BotAPI, weatherApi WeatherApi, repo db.TgBotRepo, log logger.Logger) *messageHandlerImpl {
+func newMessageHandlerImpl(bot *Bot, botApi *tgbotapi.BotAPI, weatherApi WeatherApi, repo *repository.TgBotRepository, log logger.Logger) *messageHandlerImpl {
 	return &messageHandlerImpl{
 		bot:        bot,
 		botApi:     botApi,

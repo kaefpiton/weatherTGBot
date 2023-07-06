@@ -3,7 +3,7 @@ package providers
 import (
 	"os"
 	"weatherTGBot/internal/config"
-	"weatherTGBot/pkg/db"
+	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/pkg/db/postgres"
 	"weatherTGBot/pkg/logger"
 	"weatherTGBot/pkg/logger/zerolog"
@@ -34,19 +34,23 @@ func ProvideFileLogger(cnf *config.Config) (logger.Logger, func(), error) {
 	return zerolog.NewZeroLog(ioWriter, cnf.Logger.Lvl), closeFn, nil
 }
 
-func ProvideTgBotRepo(cnf *config.Config, log logger.Logger) (db.TgBotRepo, func(), error) {
+func ProvideDB(cnf *config.Config, logger logger.Logger) (*postgres.DB, func(), error) {
 	var closeFn = func() {}
 
-	repo, err := postgres.NewDBConnection(cnf, log)
+	db, err := postgres.NewDBConnection(cnf)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	closeFn = func() {
-		_ = repo.Close()
+		_ = db.Close()
 	}
 
-	return repo, closeFn, nil
+	return db, closeFn, nil
+}
+
+func ProvideTgBotRepo(db *postgres.DB, logger logger.Logger) *repository.TgBotRepository {
+	return repository.NewBotRepository(db, logger)
 }
 
 func ProvideWeatherApi(cnf *config.Config) (telegram.WeatherApi, error) {

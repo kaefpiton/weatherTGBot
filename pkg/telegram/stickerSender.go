@@ -60,9 +60,9 @@ func (b *Bot) sendWindSpeedSticker(message *tgbotapi.Message) error {
 }
 
 func (b *Bot) getStickers(stickerType string) []string {
-	stickers, err := b.db.GetStickersCodesByType(stickerType)
+	stickers, err := b.repo.Stickers.GetStickersCodesByType(stickerType)
 	if err != nil {
-		b.log.Error("Stickers not found from db")
+		b.log.Error("StickersRepository not found from repo")
 	}
 	return stickers
 }

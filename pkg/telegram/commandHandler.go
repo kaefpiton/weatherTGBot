@@ -2,7 +2,7 @@ package telegram
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"weatherTGBot/pkg/db"
+	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/pkg/logger"
 )
 
@@ -14,11 +14,11 @@ type commandHandler interface {
 type commandHandlerImpl struct {
 	//todo завернуть в интерфейс
 	botApi *tgbotapi.BotAPI
-	repo   db.TgBotRepo
+	repo   *repository.TgBotRepository
 	log    logger.Logger
 }
 
-func newCommandHandlerImpl(botApi *tgbotapi.BotAPI, repo db.TgBotRepo, log logger.Logger) commandHandler {
+func newCommandHandlerImpl(botApi *tgbotapi.BotAPI, repo *repository.TgBotRepository, log logger.Logger) commandHandler {
 	return &commandHandlerImpl{
 		botApi: botApi,
 		repo:   repo,
@@ -73,7 +73,7 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 	}
 
 	//todo через интерактор
-	h.repo.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
+	h.repo.Users.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
 
 	msg = tgbotapi.NewMessage(message.Chat.ID, "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем")
 	msg.ReplyMarkup = initCitiesKeyboard()

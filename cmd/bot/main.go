@@ -58,10 +58,12 @@ func initService(cnf *config.Config) (func(), error) {
 	}
 
 	//TGBotRepository
-	tgBotRepository, DBcloser, err := providers.ProvideTgBotRepo(cnf, logger)
+	db, DBcloser, err := providers.ProvideDB(cnf, logger)
 	if err != nil {
 		return nil, err
 	}
+
+	tgBotRepository := providers.ProvideTgBotRepo(db, logger)
 
 	TelegramBot := telegram.NewBot(bot, weatherApi, tgBotRepository, logger)
 
