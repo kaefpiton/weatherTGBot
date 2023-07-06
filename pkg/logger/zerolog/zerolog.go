@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/rs/zerolog"
 	"io"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -19,9 +18,6 @@ func NewZeroLog(logWriter io.Writer, logLevel string) *ZeroLogWrapper {
 		TimeFormat: time.RFC3339,
 		FormatLevel: func(i interface{}) string {
 			return strings.ToUpper(fmt.Sprintf("[%s]", i))
-		},
-		FormatCaller: func(i interface{}) string {
-			return filepath.Base(fmt.Sprintf("%s", i))
 		},
 	}
 
@@ -58,22 +54,22 @@ func (z *ZeroLogWrapper) Info(kv ...interface{}) {
 	z.log.Info().Msg(msg)
 }
 
-func (z *ZeroLogWrapper) Warnf(s string, kv ...interface{}) {
-	msg := fmt.Sprint(kv...)
-	z.log.Warn().Str(s, msg).Send()
+func (z *ZeroLogWrapper) Infof(str string, kv ...interface{}) {
+	msg := fmt.Sprintf(str, kv...)
+	z.log.Info().Msg(msg)
 }
 
-func (z *ZeroLogWrapper) Errorf(s string, kv ...interface{}) {
-	msg := fmt.Sprint(kv...)
-	z.log.Error().Str(s, msg).Send()
+func (z *ZeroLogWrapper) Warnf(str string, kv ...interface{}) {
+	msg := fmt.Sprintf(str, kv...)
+	z.log.Warn().Msg(msg)
 }
 
-func (z *ZeroLogWrapper) Debugf(s string, kv ...interface{}) {
-	msg := fmt.Sprint(kv...)
-	z.log.Debug().Str(s, msg).Send()
+func (z *ZeroLogWrapper) Errorf(str string, kv ...interface{}) {
+	msg := fmt.Sprintf(str, kv...)
+	z.log.Error().Msg(msg)
 }
 
-func (z *ZeroLogWrapper) Infof(s string, kv ...interface{}) {
-	msg := fmt.Sprint(kv...)
-	z.log.Info().Str(s, msg).Send()
+func (z *ZeroLogWrapper) Debugf(str string, kv ...interface{}) {
+	msg := fmt.Sprintf(str, kv...)
+	z.log.Debug().Msg(msg)
 }

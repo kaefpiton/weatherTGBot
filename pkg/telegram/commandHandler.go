@@ -12,6 +12,7 @@ type commandHandler interface {
 }
 
 type commandHandlerImpl struct {
+	//todo завернуть в интерфейс
 	botApi *tgbotapi.BotAPI
 	repo   db.TgBotRepo
 	log    logger.Logger
@@ -61,7 +62,7 @@ func initCitiesKeyboard() tgbotapi.ReplyKeyboardMarkup {
 
 // Обрабатывает команду /start
 func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error {
-	h.log.Info("Handle start command:", message)
+	h.log.Infof("Handle start command:%s", message)
 
 	greetings := "Добро пожаловать " + message.From.FirstName + "!"
 
@@ -83,7 +84,7 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 
 // Обрабатывает команду /info
 func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error {
-	h.log.Info("Handle info command:", message)
+	h.log.Infof("Handle info command:", message)
 
 	text := "Бот, отсылающий состояние погоды на текущий момент в разных городах России"
 
@@ -95,7 +96,7 @@ func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error 
 
 // Обрабатывает отсутствие известной команды
 func (h *commandHandlerImpl) handleDefaultCommand(message *tgbotapi.Message) error {
-	h.log.Info("Handle default command:", message)
+	h.log.Infof("Handle default command:", message)
 
 	defaultText := "Я не знаю такой команды :("
 	msg := tgbotapi.NewMessage(message.Chat.ID, defaultText)

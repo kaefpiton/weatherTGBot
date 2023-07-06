@@ -30,7 +30,7 @@ func NewBot(bot *tgbotapi.BotAPI, weatherApi WeatherApi, db db.TgBotRepo, log lo
 }
 
 func (b *Bot) Start() error {
-	b.log.Infof("Authorized on account:", b.bot.Self.UserName)
+	b.log.Infof("Authorized on account: %v", b.bot.Self.UserName)
 
 	updates, err := b.initUpdatesChannel()
 	if err != nil {
