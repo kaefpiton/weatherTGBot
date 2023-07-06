@@ -2,9 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS stickers (
     ID serial NOT NULL,
-    title VARCHAR(256) NOT NULL,
-    code VARCHAR(256) NOT NULL,
-    sticker_type VARCHAR(256) NOT NULL,
+    title VARCHAR(256) NOT NULL UNIQUE,
+    code VARCHAR(256) NOT NULL UNIQUE,
     type_id INT NOT NULL,
 
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
