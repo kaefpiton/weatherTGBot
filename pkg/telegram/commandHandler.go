@@ -84,7 +84,7 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 
 // Обрабатывает команду /info
 func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error {
-	h.log.Infof("Handle info command:", message)
+	h.log.Infof("Handle info command:%s", message)
 
 	text := "Бот, отсылающий состояние погоды на текущий момент в разных городах России"
 
@@ -96,7 +96,7 @@ func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error 
 
 // Обрабатывает отсутствие известной команды
 func (h *commandHandlerImpl) handleDefaultCommand(message *tgbotapi.Message) error {
-	h.log.Infof("Handle default command:", message)
+	h.log.Infof("Handle default command:%s", message)
 
 	defaultText := "Я не знаю такой команды :("
 	msg := tgbotapi.NewMessage(message.Chat.ID, defaultText)
