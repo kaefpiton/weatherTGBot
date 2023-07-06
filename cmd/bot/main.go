@@ -8,16 +8,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"weatherTGBot/cmd/bot/config"
 	"weatherTGBot/cmd/bot/providers"
+	"weatherTGBot/internal/config"
 	"weatherTGBot/pkg/telegram"
 )
 
-const configPath = "cmd/bot/config/config.json"
+const configPath = "internal/config/config.json"
 
 func main() {
 	ctx, _ := context.WithCancel(context.Background())
-	cnf := config.LoadConfiguration(configPath)
+	cnf, err := config.LoadConfig(configPath)
+	if err != nil {
+		panic(err)
+	}
 
 	go func() {
 		sigs := make(chan os.Signal, 1)
@@ -36,7 +39,7 @@ func main() {
 	cleanup()
 }
 
-func initService(cnf config.Config) (func(), error) {
+func initService(cnf *config.Config) (func(), error) {
 	//telegram
 	//todo сделать провайдеров
 	//logger

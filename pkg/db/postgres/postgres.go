@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"time"
+	"weatherTGBot/internal/config"
 	"weatherTGBot/pkg/logger"
 )
 import _ "github.com/lib/pq"
@@ -12,8 +13,8 @@ type DB struct {
 	log logger.Logger
 }
 
-func NewDBConnection(dsn string, log logger.Logger) (*DB, error) {
-	db, err := sql.Open("postgres", dsn)
+func NewDBConnection(cnf *config.Config, log logger.Logger) (*DB, error) {
+	db, err := sql.Open("postgres", cnf.GetPgDsn())
 	if err != nil {
 		return nil, err
 	}
@@ -22,8 +23,8 @@ func NewDBConnection(dsn string, log logger.Logger) (*DB, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(5)
+	db.SetMaxOpenConns(cnf.Postgres.MaxOpenConns)
+	db.SetMaxIdleConns(cnf.Postgres.MaxIdleConns)
 	db.SetConnMaxIdleTime(time.Minute * 5)
 
 	return &DB{
