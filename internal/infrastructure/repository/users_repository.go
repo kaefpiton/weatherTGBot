@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"sync"
 	"time"
 	"weatherTGBot/internal/usecase/repository"
 	"weatherTGBot/pkg/db/postgres"
@@ -16,8 +17,8 @@ type User struct {
 }
 
 type UsersRepository struct {
-	db *postgres.DB
-	//todo add mutex
+	db     *postgres.DB
+	mu     sync.RWMutex
 	logger logger.Logger
 }
 
@@ -51,7 +52,8 @@ func (r *UsersRepository) createUser(db *postgres.DB, firstname, lastname string
 		Lastname:  lastname,
 		ChatID:    chatID,
 	}
-
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	_, err := db.Exec("INSERT INTO users (firstname, lastname, chat_id) values ($1, $2, $3)",
 		user.Firstname,
 		user.Lastname,
@@ -77,7 +79,8 @@ func (r *UsersRepository) getUserIDByChatID(db *postgres.DB, chatID int64) (int6
 	}
 
 	var userID int64
-
+	r.mu.RLock()
+	defer r.mu.Unlock()
 	err = stmt.QueryRow(chatID).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
