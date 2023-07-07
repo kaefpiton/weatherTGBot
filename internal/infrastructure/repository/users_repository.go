@@ -29,65 +29,48 @@ func NewUsersRepository(db *postgres.DB, log logger.Logger) repository.UsersRepo
 	}
 }
 
-// todo логика интерактора)
+// todo логика интерактора) чет тип initUser
 func (r *UsersRepository) InsertUser(firstname, lastname string, chatID int64) error {
-	userID, err := r.getUserIDByChatID(r.db, chatID)
-	if err != nil {
-		return err
-	}
-
-	if userID == -1 {
-		return r.createUser(r.db, firstname, lastname, chatID)
+	if !r.IsUserExist(chatID) {
+		r.logger.Info("create new user")
+		return r.CreateUser(firstname, lastname, chatID)
 	} else {
 		r.logger.Info("user already exist. Update last usage")
-		return r.updateLastUsage(r.db, userID)
+		return r.UpdateLastUsage(chatID)
 	}
 }
 
-func (r *UsersRepository) createUser(db *postgres.DB, firstname, lastname string, chatID int64) error {
+func (r *UsersRepository) CreateUser(firstname, lastname string, chatID int64) error {
 	r.logger.Info("create new user")
 
-	user := User{
-		Firstname: firstname,
-		Lastname:  lastname,
-		ChatID:    chatID,
-	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	_, err := db.Exec("INSERT INTO users (firstname, lastname, chat_id) values ($1, $2, $3)",
-		user.Firstname,
-		user.Lastname,
-		user.ChatID)
+	_, err := r.db.Exec("INSERT INTO users (firstname, lastname, chat_id) values ($1, $2, $3)",
+		firstname,
+		lastname,
+		chatID)
 
 	return err
 }
 
-// todo сделать ChatId уникальным полем
-func (r *UsersRepository) updateLastUsage(db *postgres.DB, userID int64) error {
-	_, err := db.Exec("UPDATE users SET last_usage = $1 WHERE id = $2",
-		time.Now(),
-		userID)
-
-	return err
-}
-
-// todo возможно primary сделать chatID (посмотреть не повторяются ли)
-func (r *UsersRepository) getUserIDByChatID(db *postgres.DB, chatID int64) (int64, error) {
-	stmt, err := db.Prepare("SELECT ID FROM users WHERE chat_id = $1")
-	if err != nil {
-		return -1, err
-	}
-
-	var userID int64
-	r.mu.RLock()
+func (r *UsersRepository) UpdateLastUsage(chatID int64) error {
+	r.mu.Lock()
 	defer r.mu.Unlock()
-	err = stmt.QueryRow(chatID).Scan(&userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return -1, nil
-		}
+	_, err := r.db.Exec("UPDATE users SET last_usage = $1 WHERE chat_id = $2",
+		time.Now(),
+		chatID)
 
-		return -1, err
+	return err
+}
+
+func (r *UsersRepository) IsUserExist(chatID int64) bool {
+	var exists bool
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	err := r.db.QueryRow("SELECT EXISTS (SELECT chat_id FROM users WHERE chat_id=$1)", chatID).Scan(&exists)
+	if err != nil && err != sql.ErrNoRows {
+		r.logger.Error("error checking if row exists: %v", err)
 	}
-	return userID, nil
+
+	return exists
 }

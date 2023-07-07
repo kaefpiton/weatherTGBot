@@ -40,11 +40,11 @@ func main() {
 }
 
 func initService(cnf *config.Config) (func(), error) {
-	//telegram
-	//todo сделать провайдеров
 	//logger
 	logger := providers.ProvideConsoleLogger(cnf)
 
+	//telegram
+	//todo сделать провайдеров
 	bot, err := tgbotapi.NewBotAPI(cnf.TelegramApi.APIKey)
 	if err != nil {
 		return nil, err
