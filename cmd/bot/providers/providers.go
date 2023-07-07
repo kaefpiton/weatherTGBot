@@ -7,7 +7,7 @@ import (
 	"weatherTGBot/pkg/db/postgres"
 	"weatherTGBot/pkg/logger"
 	"weatherTGBot/pkg/logger/zerolog"
-	"weatherTGBot/pkg/telegram"
+	"weatherTGBot/pkg/weather"
 )
 
 func ProvideConsoleLogger(cnf *config.Config) logger.Logger {
@@ -53,8 +53,8 @@ func ProvideTgBotRepo(db *postgres.DB, logger logger.Logger) *repository.TgBotRe
 	return repository.NewBotRepository(db, logger)
 }
 
-func ProvideWeatherApi(cnf *config.Config) (telegram.WeatherApi, error) {
-	weatherApi, err := telegram.NewOpenWeatherMapApi(cnf.WeatherApi.Unit, cnf.WeatherApi.Lang, cnf.WeatherApi.APIKey)
+func ProvideWeatherApi(cnf *config.Config) (weather.WeatherApi, error) {
+	weatherApi, err := weather.NewOpenWeatherMapApi(cnf.WeatherApi.Unit, cnf.WeatherApi.Lang, cnf.WeatherApi.APIKey)
 	if err != nil {
 		return nil, err
 	}

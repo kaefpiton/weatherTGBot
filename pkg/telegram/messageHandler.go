@@ -1,9 +1,11 @@
 package telegram
 
 import (
-	"errors"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"weatherTGBot/internal/domain/api"
 	"weatherTGBot/internal/infrastructure/repository"
+	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
 )
 
@@ -12,63 +14,60 @@ type messageHandler interface {
 }
 
 type messageHandlerImpl struct {
-	bot        *Bot
-	botApi     *tgbotapi.BotAPI
-	weatherApi WeatherApi
-	repo       *repository.TgBotRepository
-	log        logger.Logger
+	//	bot                *Bot
+	botApi             *tgbotapi.BotAPI
+	messagesInteractor interactor.MessagesInteractor
+	weatherInteractor  interactor.WeatherInteractor
+	repo               *repository.TgBotRepository
+	logger             logger.Logger
 }
 
 // todo уйти от зависимости bot
-func newMessageHandlerImpl(bot *Bot, botApi *tgbotapi.BotAPI, weatherApi WeatherApi, repo *repository.TgBotRepository, log logger.Logger) *messageHandlerImpl {
+func newMessageHandlerImpl(
+	botApi *tgbotapi.BotAPI,
+	messagesInteractor interactor.MessagesInteractor,
+	weatherInteractor interactor.WeatherInteractor,
+	repo *repository.TgBotRepository,
+	logger logger.Logger) *messageHandlerImpl {
 	return &messageHandlerImpl{
-		bot:        bot,
-		botApi:     botApi,
-		weatherApi: weatherApi,
-		repo:       repo,
-		log:        log,
+		botApi:             botApi,
+		messagesInteractor: messagesInteractor,
+		weatherInteractor:  weatherInteractor,
+		repo:               repo,
+		logger:             logger,
 	}
 }
 
-// todo вынемти
-var cities = map[string]string{"Москва": "Moscow", "Ростов": "Rostov", "Агалатово": "Agalatovo"}
-
 // Главный обработчик всех сообщений
 func (h *messageHandlerImpl) handleMessage(message *tgbotapi.Message) error {
-	//log.Printf("[%s] %s", message.From.UserName, message.Text)
+	h.logger.Infof("[%s] %s", message.From.UserName, message.Text)
 
-	if _, ok := cities[message.Text]; ok {
-		return h.handleCityMessage(message)
+	if _, ok := api.Cities[message.Text]; ok {
+		return h.handleCityChoiceMessage(message)
 	}
 
 	return h.handleDefaultMessage(message)
 }
 
 // Обрабатывает сообщение с городом
-func (h *messageHandlerImpl) handleCityMessage(message *tgbotapi.Message) error {
+func (h *messageHandlerImpl) handleCityChoiceMessage(message *tgbotapi.Message) error {
 	selectedCity := message.Text
 
-	msg := tgbotapi.NewMessage(message.Chat.ID, "Вы выбрали город "+selectedCity)
-	msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true) //Убирает клавиатуру
-	if _, err := h.botApi.Send(msg); err != nil {
+	choseCityMsg := fmt.Sprintf("Вы выбрали город %v", selectedCity)
+	if err := h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, choseCityMsg); err != nil {
 		return err
 	}
 
-	if city, ok := cities[selectedCity]; ok {
-		weatherOptions := NewWeatherOptions(city)
-		if err := h.weatherApi.SetOptions(weatherOptions); err != nil {
-			return err
-		}
-	} else {
-		return errors.New("hashmap: The selected city is not in the cities hashmap")
+	//todo подумать над общими ресурсами
+	wr, err := h.weatherInteractor.GetWeatherByCity(selectedCity)
+	if err != nil {
+		return fmt.Errorf("err get weather by city:%v", err)
 	}
 
-	return h.bot.sendWeather(message)
+	return h.weatherInteractor.SendWeather(message, wr)
 }
 
 // Обрабатывает сообщение по умолчанию
 func (h *messageHandlerImpl) handleDefaultMessage(message *tgbotapi.Message) error {
-	msg := tgbotapi.NewMessage(message.Chat.ID, "Вы не выбрали город ! Пожалуйста, выберете город на клавиатуре")
-	_, err := h.botApi.Send(msg)
-	return err
+	return h.messagesInteractor.SendMessage(message.Chat.ID, "Вы не выбрали город ! Пожалуйста, выберете город на клавиатуре")
 }

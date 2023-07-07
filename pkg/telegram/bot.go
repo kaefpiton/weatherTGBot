@@ -3,28 +3,32 @@ package telegram
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"weatherTGBot/internal/infrastructure/repository"
+	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
+	"weatherTGBot/pkg/weather"
 )
 
 type Bot struct {
-	bot            *tgbotapi.BotAPI
-	commandHandler commandHandler
-	messageHandler messageHandler
-	weatherApi     WeatherApi
-	repo           *repository.TgBotRepository
-	log            logger.Logger
+	bot                *tgbotapi.BotAPI
+	messagesInteractor interactor.MessagesInteractor
+	commandHandler     commandHandler
+	messageHandler     messageHandler
+	repo               *repository.TgBotRepository
+	log                logger.Logger
 }
 
-func NewBot(bot *tgbotapi.BotAPI, weatherApi WeatherApi, repo *repository.TgBotRepository, log logger.Logger) *Bot {
+func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *repository.TgBotRepository, log logger.Logger) *Bot {
 	tgbot := &Bot{
-		bot:        bot,
-		repo:       repo,
-		log:        log,
-		weatherApi: weatherApi,
+		bot:  botApi,
+		repo: repo,
+		log:  log,
 	}
-	tgbot.commandHandler = newCommandHandlerImpl(bot, repo, log)
-	//todo уйти от зввисимости tgbot
-	tgbot.messageHandler = newMessageHandlerImpl(tgbot, bot, weatherApi, repo, log)
+
+	messagesInteractor := interactor.NewMessagesInteractor(botApi, repo, log)
+	tgbot.messagesInteractor = messagesInteractor
+	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor)
+	tgbot.commandHandler = newCommandHandlerImpl(messagesInteractor, repo, log)
+	tgbot.messageHandler = newMessageHandlerImpl(botApi, messagesInteractor, weatherInteractor, repo, log)
 
 	return tgbot
 }
@@ -43,8 +47,7 @@ func (b *Bot) Start() error {
 }
 
 func (b *Bot) Stop() {
-	//todo change log
-	b.log.Info("stop tg bot")
+	b.log.Info("stop receiving updates")
 	b.bot.StopReceivingUpdates()
 }
 

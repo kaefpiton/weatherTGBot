@@ -1,7 +1,8 @@
-package telegram
+package weather
 
 import (
 	owm "github.com/briandowns/openweathermap"
+	"sync"
 )
 
 // todo вынести
@@ -27,6 +28,7 @@ func NewWeatherOptions(city string) WeatherOptions {
 }
 
 type openWeatherMapApi struct {
+	mu         sync.Mutex
 	weatherAPI *owm.CurrentWeatherData
 }
 
@@ -71,5 +73,7 @@ func (w *openWeatherMapApi) GetHumidity() int {
 }
 
 func (w *openWeatherMapApi) SetOptions(options WeatherOptions) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	return w.weatherAPI.CurrentByName(options.City)
 }

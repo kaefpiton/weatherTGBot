@@ -1,8 +1,11 @@
 package telegram
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"weatherTGBot/internal/domain/api"
 	"weatherTGBot/internal/infrastructure/repository"
+	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
 )
 
@@ -12,17 +15,16 @@ type commandHandler interface {
 }
 
 type commandHandlerImpl struct {
-	//todo завернуть в интерфейс
-	botApi *tgbotapi.BotAPI
-	repo   *repository.TgBotRepository
-	log    logger.Logger
+	messagesInteractor interactor.MessagesInteractor
+	repo               *repository.TgBotRepository
+	log                logger.Logger
 }
 
-func newCommandHandlerImpl(botApi *tgbotapi.BotAPI, repo *repository.TgBotRepository, log logger.Logger) commandHandler {
+func newCommandHandlerImpl(messagesInteractor interactor.MessagesInteractor, repo *repository.TgBotRepository, log logger.Logger) commandHandler {
 	return &commandHandlerImpl{
-		botApi: botApi,
-		repo:   repo,
-		log:    log,
+		messagesInteractor: messagesInteractor,
+		repo:               repo,
+		log:                log,
 	}
 }
 
@@ -46,28 +48,12 @@ func (h *commandHandlerImpl) handleCommand(message *tgbotapi.Message) error {
 	}
 }
 
-// Инициализирует клавиатуру с городами
-// todo подумать как можно запилить клавиатуру в 2 строки
-func initCitiesKeyboard() tgbotapi.ReplyKeyboardMarkup {
-	var Keyboard = tgbotapi.NewReplyKeyboard()
-
-	for key, _ := range cities {
-		Keyboard.Keyboard = append(Keyboard.Keyboard, tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(key),
-		))
-	}
-
-	return Keyboard
-}
-
 // Обрабатывает команду /start
 func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error {
 	h.log.Infof("Handle start command:%s", message)
 
-	greetings := "Добро пожаловать " + message.From.FirstName + "!"
-
-	msg := tgbotapi.NewMessage(message.Chat.ID, greetings)
-	_, err := h.botApi.Send(msg)
+	greetings := fmt.Sprintf("Добро пожаловать, %v!", message.From.FirstName)
+	err := h.messagesInteractor.SendMessage(message.Chat.ID, greetings)
 	if err != nil {
 		return err
 	}
@@ -75,11 +61,13 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 	//todo через интерактор
 	h.repo.Users.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
 
-	msg = tgbotapi.NewMessage(message.Chat.ID, "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем")
-	msg.ReplyMarkup = initCitiesKeyboard()
-	_, err = h.botApi.Send(msg)
+	text := "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем"
+	err = h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, text, api.Cities)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 // Обрабатывает команду /info
@@ -88,10 +76,7 @@ func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error 
 
 	text := "Бот, отсылающий состояние погоды на текущий момент в разных городах России"
 
-	msg := tgbotapi.NewMessage(message.Chat.ID, text)
-	_, err := h.botApi.Send(msg)
-
-	return err
+	return h.messagesInteractor.SendMessage(message.Chat.ID, text)
 }
 
 // Обрабатывает отсутствие известной команды
@@ -99,8 +84,6 @@ func (h *commandHandlerImpl) handleDefaultCommand(message *tgbotapi.Message) err
 	h.log.Infof("Handle default command:%s", message)
 
 	defaultText := "Я не знаю такой команды :("
-	msg := tgbotapi.NewMessage(message.Chat.ID, defaultText)
-	_, err := h.botApi.Send(msg)
 
-	return err
+	return h.messagesInteractor.SendMessage(message.Chat.ID, defaultText)
 }
