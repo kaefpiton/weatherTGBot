@@ -8,7 +8,6 @@ import (
 )
 
 type Sticker struct {
-	ID          int
 	Title       string
 	Code        string
 	StickerType string
@@ -27,7 +26,6 @@ func NewStickersRepository(db *postgres.DB, log logger.Logger) repository.Sticke
 	}
 }
 
-// todo сделать айдишником код стикера
 func (r *StickersRepository) GetStickersCodesByType(stickerType string) ([]string, error) {
 	var stickerCodes []string
 

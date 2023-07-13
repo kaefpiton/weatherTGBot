@@ -1,14 +1,13 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS stickers (
-    ID serial NOT NULL,
-    title VARCHAR(256) NOT NULL UNIQUE,
     code VARCHAR(256) NOT NULL UNIQUE,
+    title VARCHAR(256) NOT NULL UNIQUE,
     type_id INT NOT NULL,
 
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    PRIMARY KEY(ID),
+    PRIMARY KEY(code),
     CONSTRAINT fk_stickers_types FOREIGN KEY(type_id) REFERENCES sticker_types(ID)
     );
 -- +goose StatementEnd
