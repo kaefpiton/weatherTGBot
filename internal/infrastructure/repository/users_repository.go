@@ -29,18 +29,7 @@ func NewUsersRepository(db *postgres.DB, log logger.Logger) repository.UsersRepo
 	}
 }
 
-// todo логика интерактора) чет тип initUser
-func (r *UsersRepository) InsertUser(firstname, lastname string, chatID int64) error {
-	if !r.IsUserExist(chatID) {
-		r.logger.Info("create new user")
-		return r.CreateUser(firstname, lastname, chatID)
-	} else {
-		r.logger.Info("user already exist. Update last usage")
-		return r.UpdateLastUsage(chatID)
-	}
-}
-
-func (r *UsersRepository) CreateUser(firstname, lastname string, chatID int64) error {
+func (r *UsersRepository) Create(firstname, lastname string, chatID int64) error {
 	r.logger.Info("create new user")
 
 	r.mu.Lock()
@@ -63,7 +52,7 @@ func (r *UsersRepository) UpdateLastUsage(chatID int64) error {
 	return err
 }
 
-func (r *UsersRepository) IsUserExist(chatID int64) bool {
+func (r *UsersRepository) IsExist(chatID int64) bool {
 	var exists bool
 	r.mu.RLock()
 	defer r.mu.RUnlock()

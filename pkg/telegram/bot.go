@@ -11,30 +11,31 @@ import (
 type Bot struct {
 	bot                *tgbotapi.BotAPI
 	messagesInteractor interactor.MessagesInteractor
-	commandHandler     commandHandler
+	commandHandler     CommandHandler
 	messageHandler     messageHandler
 	repo               *repository.TgBotRepository
-	log                logger.Logger
+	logger             logger.Logger
 }
 
-func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *repository.TgBotRepository, log logger.Logger) *Bot {
+func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *repository.TgBotRepository, logger logger.Logger) *Bot {
 	tgbot := &Bot{
-		bot:  botApi,
-		repo: repo,
-		log:  log,
+		bot:    botApi,
+		repo:   repo,
+		logger: logger,
 	}
 
-	messagesInteractor := interactor.NewMessagesInteractor(botApi, repo, log)
+	messagesInteractor := interactor.NewMessagesInteractor(botApi, repo, logger)
 	tgbot.messagesInteractor = messagesInteractor
 	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor)
-	tgbot.commandHandler = newCommandHandlerImpl(messagesInteractor, repo, log)
-	tgbot.messageHandler = newMessageHandlerImpl(botApi, messagesInteractor, weatherInteractor, repo, log)
+	usersInteractor := interactor.NewUsersInteractor(repo, logger)
+	tgbot.commandHandler = newCommandHandlerImpl(messagesInteractor, usersInteractor, logger)
+	tgbot.messageHandler = newMessageHandlerImpl(botApi, messagesInteractor, weatherInteractor, repo, logger)
 
 	return tgbot
 }
 
 func (b *Bot) Start() error {
-	b.log.Infof("Authorized on account: %v", b.bot.Self.UserName)
+	b.logger.Infof("Authorized on account: %v", b.bot.Self.UserName)
 
 	updates, err := b.initUpdatesChannel()
 	if err != nil {
@@ -47,7 +48,7 @@ func (b *Bot) Start() error {
 }
 
 func (b *Bot) Stop() {
-	b.log.Info("stop receiving updates")
+	b.logger.Info("stop receiving updates")
 	b.bot.StopReceivingUpdates()
 }
 
@@ -68,14 +69,14 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 		if update.Message.IsCommand() {
 			err := b.commandHandler.handleCommand(update.Message)
 			if err != nil {
-				b.log.Error(err)
+				b.logger.Error(err)
 			}
 			continue
 		}
 
 		err := b.messageHandler.handleMessage(update.Message)
 		if err != nil {
-			b.log.Error(err)
+			b.logger.Error(err)
 		}
 	}
 }

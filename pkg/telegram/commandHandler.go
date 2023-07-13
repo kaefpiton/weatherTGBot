@@ -9,21 +9,22 @@ import (
 	"weatherTGBot/pkg/logger"
 )
 
-type commandHandler interface {
+type CommandHandler interface {
 	//todo можно завернуть message чтобы уйти от зависимости api
 	handleCommand(message *tgbotapi.Message) error
 }
 
 type commandHandlerImpl struct {
 	messagesInteractor interactor.MessagesInteractor
+	usersInteractor    interactor.UsersInteractor
 	repo               *repository.TgBotRepository
 	log                logger.Logger
 }
 
-func newCommandHandlerImpl(messagesInteractor interactor.MessagesInteractor, repo *repository.TgBotRepository, log logger.Logger) commandHandler {
+func newCommandHandlerImpl(messagesInteractor interactor.MessagesInteractor, usersInteractor interactor.UsersInteractor, log logger.Logger) CommandHandler {
 	return &commandHandlerImpl{
 		messagesInteractor: messagesInteractor,
-		repo:               repo,
+		usersInteractor:    usersInteractor,
 		log:                log,
 	}
 }
@@ -32,7 +33,7 @@ const commandStart = "start"
 const commandStop = "stop"
 const commandInfo = "info"
 
-//todo вынести в интерфейс (usecase) commandHandler + реализацию в инфру
+//todo вынести в интерфейс (usecase) CommandHandler + реализацию в инфру
 
 // Главный обработчик всех команд
 func (h *commandHandlerImpl) handleCommand(message *tgbotapi.Message) error {
@@ -59,7 +60,7 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 	}
 
 	//todo через интерактор
-	h.repo.Users.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
+	h.usersInteractor.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
 
 	text := "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем"
 	err = h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, text, api.Cities)

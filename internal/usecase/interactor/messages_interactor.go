@@ -78,7 +78,6 @@ func (i *messagesInteractor) SendMessageWithRemovingKeyboard(ChatID int64, text 
 	return nil
 }
 
-// todo сделать айдишником код стикера
 func (i *messagesInteractor) GetStickersByType(stickerType string) []string {
 	stickers, err := i.repo.Stickers.GetStickersCodesByType(stickerType)
 	if err != nil {
