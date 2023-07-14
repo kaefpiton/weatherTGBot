@@ -30,7 +30,7 @@ func (r *StickersRepository) GetStickersCodesByType(stickerType string) ([]strin
 	var stickerCodes []string
 
 	r.mu.RLock()
-	query := `SELECT code FROM stickers JOIN sticker_types st on stickers.type_id = st.id where st.title= $1`
+	query := `SELECT code FROM stickers JOIN sticker_types type on stickers.type_id = type.id where type.title= $1`
 	rows, err := r.db.Query(query, stickerType)
 	if err != nil {
 		return nil, err

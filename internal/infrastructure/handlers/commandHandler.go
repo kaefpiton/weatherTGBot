@@ -1,4 +1,4 @@
-package telegram
+package handlers
 
 import (
 	"fmt"
@@ -11,18 +11,18 @@ import (
 
 type CommandHandler interface {
 	//todo можно завернуть message чтобы уйти от зависимости api
-	handleCommand(message *tgbotapi.Message) error
+	HandleCommand(message *tgbotapi.Message) error
 }
 
-type commandHandlerImpl struct {
+type commandHandler struct {
 	messagesInteractor interactor.MessagesInteractor
 	usersInteractor    interactor.UsersInteractor
 	repo               *repository.TgBotRepository
 	log                logger.Logger
 }
 
-func newCommandHandlerImpl(messagesInteractor interactor.MessagesInteractor, usersInteractor interactor.UsersInteractor, log logger.Logger) CommandHandler {
-	return &commandHandlerImpl{
+func NewCommandHandler(messagesInteractor interactor.MessagesInteractor, usersInteractor interactor.UsersInteractor, log logger.Logger) CommandHandler {
+	return &commandHandler{
 		messagesInteractor: messagesInteractor,
 		usersInteractor:    usersInteractor,
 		log:                log,
@@ -36,7 +36,7 @@ const commandInfo = "info"
 //todo вынести в интерфейс (usecase) CommandHandler + реализацию в инфру
 
 // Главный обработчик всех команд
-func (h *commandHandlerImpl) handleCommand(message *tgbotapi.Message) error {
+func (h *commandHandler) HandleCommand(message *tgbotapi.Message) error {
 	switch message.Command() {
 	case commandStart:
 		return h.handleStartCommand(message)
@@ -50,7 +50,7 @@ func (h *commandHandlerImpl) handleCommand(message *tgbotapi.Message) error {
 }
 
 // Обрабатывает команду /start
-func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error {
+func (h *commandHandler) handleStartCommand(message *tgbotapi.Message) error {
 	h.log.Infof("Handle start command:%s", message)
 
 	greetings := fmt.Sprintf("Добро пожаловать, %v!", message.From.FirstName)
@@ -59,7 +59,6 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 		return err
 	}
 
-	//todo через интерактор
 	h.usersInteractor.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
 
 	text := "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем"
@@ -72,7 +71,7 @@ func (h *commandHandlerImpl) handleStartCommand(message *tgbotapi.Message) error
 }
 
 // Обрабатывает команду /info
-func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error {
+func (h *commandHandler) handleInfoCommand(message *tgbotapi.Message) error {
 	h.log.Infof("Handle info command:%s", message)
 
 	text := "Бот, отсылающий состояние погоды на текущий момент в разных городах России"
@@ -81,7 +80,7 @@ func (h *commandHandlerImpl) handleInfoCommand(message *tgbotapi.Message) error 
 }
 
 // Обрабатывает отсутствие известной команды
-func (h *commandHandlerImpl) handleDefaultCommand(message *tgbotapi.Message) error {
+func (h *commandHandler) handleDefaultCommand(message *tgbotapi.Message) error {
 	h.log.Infof("Handle default command:%s", message)
 
 	defaultText := "Я не знаю такой команды :("

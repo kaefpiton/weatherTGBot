@@ -2,6 +2,7 @@ package telegram
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"weatherTGBot/internal/infrastructure/handlers"
 	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
@@ -9,12 +10,11 @@ import (
 )
 
 type Bot struct {
-	bot                *tgbotapi.BotAPI
-	messagesInteractor interactor.MessagesInteractor
-	commandHandler     CommandHandler
-	messageHandler     messageHandler
-	repo               *repository.TgBotRepository
-	logger             logger.Logger
+	bot            *tgbotapi.BotAPI
+	commandHandler handlers.CommandHandler
+	messageHandler handlers.MessageHandler
+	repo           *repository.TgBotRepository
+	logger         logger.Logger
 }
 
 func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *repository.TgBotRepository, logger logger.Logger) *Bot {
@@ -25,11 +25,10 @@ func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *reposi
 	}
 
 	messagesInteractor := interactor.NewMessagesInteractor(botApi, repo, logger)
-	tgbot.messagesInteractor = messagesInteractor
 	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor)
 	usersInteractor := interactor.NewUsersInteractor(repo, logger)
-	tgbot.commandHandler = newCommandHandlerImpl(messagesInteractor, usersInteractor, logger)
-	tgbot.messageHandler = newMessageHandlerImpl(botApi, messagesInteractor, weatherInteractor, repo, logger)
+	tgbot.commandHandler = handlers.NewCommandHandler(messagesInteractor, usersInteractor, logger)
+	tgbot.messageHandler = handlers.NewMessageHandler(botApi, messagesInteractor, weatherInteractor, usersInteractor, repo, logger)
 
 	return tgbot
 }
@@ -67,14 +66,14 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 		}
 
 		if update.Message.IsCommand() {
-			err := b.commandHandler.handleCommand(update.Message)
+			err := b.commandHandler.HandleCommand(update.Message)
 			if err != nil {
 				b.logger.Error(err)
 			}
 			continue
 		}
 
-		err := b.messageHandler.handleMessage(update.Message)
+		err := b.messageHandler.HandleMessage(update.Message)
 		if err != nil {
 			b.logger.Error(err)
 		}

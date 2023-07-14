@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"sync"
 	"time"
+	"weatherTGBot/internal/domain"
 	"weatherTGBot/internal/usecase/repository"
 	"weatherTGBot/pkg/db/postgres"
 	"weatherTGBot/pkg/logger"
@@ -29,14 +30,15 @@ func NewUsersRepository(db *postgres.DB, log logger.Logger) repository.UsersRepo
 	}
 }
 
-func (r *UsersRepository) Create(firstname, lastname string, chatID int64) error {
+func (r *UsersRepository) Create(firstname, lastname, state string, chatID int64) error {
 	r.logger.Info("create new user")
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	_, err := r.db.Exec("INSERT INTO users (firstname, lastname, chat_id) values ($1, $2, $3)",
+	_, err := r.db.Exec("INSERT INTO users (firstname, lastname,state, chat_id) values ($1, $2, $3, $4)",
 		firstname,
 		lastname,
+		state,
 		chatID)
 
 	return err
@@ -47,6 +49,32 @@ func (r *UsersRepository) UpdateLastUsage(chatID int64) error {
 	defer r.mu.Unlock()
 	_, err := r.db.Exec("UPDATE users SET last_usage = $1 WHERE chat_id = $2",
 		time.Now(),
+		chatID)
+
+	return err
+}
+
+func (r *UsersRepository) GetUserStateByChatID(chatID int64) (string, error) {
+	var state string
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	query := `SELECT state FROM users WHERE chat_id=$1`
+	row := r.db.QueryRow(query, chatID)
+	err := row.Scan(&state)
+	if err != nil {
+		//todo может возвращать стейт с
+		return domain.Err_usr_state, err
+	}
+
+	return state, nil
+}
+
+func (r *UsersRepository) SetUserState(chatID int64, state string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	_, err := r.db.Exec("UPDATE users SET state = $1 WHERE chat_id = $2",
+		state,
 		chatID)
 
 	return err

@@ -1,56 +1,67 @@
-package telegram
+package handlers
 
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"weatherTGBot/internal/domain"
 	"weatherTGBot/internal/domain/api"
 	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
 )
 
-type messageHandler interface {
-	handleMessage(message *tgbotapi.Message) error
+type MessageHandler interface {
+	HandleMessage(message *tgbotapi.Message) error
 }
 
-type messageHandlerImpl struct {
+type messageHandler struct {
 	//	bot                *Bot
 	botApi             *tgbotapi.BotAPI
 	messagesInteractor interactor.MessagesInteractor
 	weatherInteractor  interactor.WeatherInteractor
+	userInteractor     interactor.UsersInteractor
 	repo               *repository.TgBotRepository
 	logger             logger.Logger
 }
 
 // todo уйти от зависимости bot
-func newMessageHandlerImpl(
+func NewMessageHandler(
 	botApi *tgbotapi.BotAPI,
 	messagesInteractor interactor.MessagesInteractor,
 	weatherInteractor interactor.WeatherInteractor,
+	userInteractor interactor.UsersInteractor,
 	repo *repository.TgBotRepository,
-	logger logger.Logger) *messageHandlerImpl {
-	return &messageHandlerImpl{
+	logger logger.Logger) *messageHandler {
+	return &messageHandler{
 		botApi:             botApi,
 		messagesInteractor: messagesInteractor,
 		weatherInteractor:  weatherInteractor,
+		userInteractor:     userInteractor,
 		repo:               repo,
 		logger:             logger,
 	}
 }
 
 // Главный обработчик всех сообщений
-func (h *messageHandlerImpl) handleMessage(message *tgbotapi.Message) error {
+func (h *messageHandler) HandleMessage(message *tgbotapi.Message) error {
 	h.logger.Infof("[%s] %s", message.From.UserName, message.Text)
 
-	if _, ok := api.Cities[message.Text]; ok {
-		return h.handleCityChoiceMessage(message)
+	//todo для неавторизованных пользователей
+	if h.userInteractor.GetUserStateByChatID(message.Chat.ID) == domain.Unauth_usr_state {
+		return h.handleUnauthorisedUserMessage(message)
+	}
+
+	if h.userInteractor.GetUserStateByChatID(message.Chat.ID) == domain.Auth_usr_state {
+		if _, ok := api.Cities[message.Text]; ok {
+			return h.handleCityChoiceMessage(message)
+		}
 	}
 
 	return h.handleDefaultMessage(message)
 }
 
 // Обрабатывает сообщение с городом
-func (h *messageHandlerImpl) handleCityChoiceMessage(message *tgbotapi.Message) error {
+func (h *messageHandler) handleCityChoiceMessage(message *tgbotapi.Message) error {
 	selectedCity := message.Text
 
 	choseCityMsg := fmt.Sprintf("Вы выбрали город %v", selectedCity)
@@ -67,7 +78,12 @@ func (h *messageHandlerImpl) handleCityChoiceMessage(message *tgbotapi.Message) 
 	return h.weatherInteractor.SendWeather(message, wr)
 }
 
+// Обрабатывает сообщение от неавторизованных пользователей
+func (h *messageHandler) handleUnauthorisedUserMessage(message *tgbotapi.Message) error {
+	return h.messagesInteractor.SendMessage(message.Chat.ID, "Вы не автризовались! Пожалуйста, нажмите комманду start")
+}
+
 // Обрабатывает сообщение по умолчанию
-func (h *messageHandlerImpl) handleDefaultMessage(message *tgbotapi.Message) error {
+func (h *messageHandler) handleDefaultMessage(message *tgbotapi.Message) error {
 	return h.messagesInteractor.SendMessage(message.Chat.ID, "Вы не выбрали город ! Пожалуйста, выберете город на клавиатуре")
 }
