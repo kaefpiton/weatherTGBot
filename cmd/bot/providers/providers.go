@@ -1,6 +1,7 @@
 package providers
 
 import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"os"
 	"weatherTGBot/internal/config"
 	"weatherTGBot/internal/infrastructure/repository"
@@ -60,4 +61,14 @@ func ProvideWeatherApi(cnf *config.Config) (weather.WeatherApi, error) {
 	}
 
 	return weatherApi, nil
+}
+
+func ProvideBotApi(cnf *config.Config) (*tgbotapi.BotAPI, error) {
+	botApi, err := tgbotapi.NewBotAPI(cnf.TelegramApi.APIKey)
+	if err != nil {
+		return nil, err
+	}
+	botApi.Debug = cnf.TelegramApi.Debug
+
+	return botApi, err
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"os"
 	"os/signal"
@@ -44,12 +43,10 @@ func initService(cnf *config.Config) (func(), error) {
 	logger := providers.ProvideConsoleLogger(cnf)
 
 	//telegram
-	//todo сделать провайдеров
-	bot, err := tgbotapi.NewBotAPI(cnf.TelegramApi.APIKey)
+	bot, err := providers.ProvideBotApi(cnf)
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = cnf.TelegramApi.Debug
 
 	//weather API
 	weatherApi, err := providers.ProvideWeatherApi(cnf)
