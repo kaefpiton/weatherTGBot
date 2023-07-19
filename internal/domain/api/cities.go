@@ -7,3 +7,12 @@ var Cities = map[string]string{
 	"Агалатово": "Agalatovo",
 	"Минск":     "Minsk",
 }
+
+// todo зарефакторить это
+func GetCitiesKeys(cities map[string]string) []string {
+	result := make([]string, 0, 0)
+	for k, _ := range cities {
+		result = append(result, k)
+	}
+	return result
+}

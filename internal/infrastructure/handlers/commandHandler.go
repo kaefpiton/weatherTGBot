@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"weatherTGBot/internal/domain/api"
-	"weatherTGBot/internal/infrastructure/repository"
+	"weatherTGBot/internal/domain"
+	"weatherTGBot/internal/domain/keyboards"
 	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
 )
@@ -17,7 +17,6 @@ type CommandHandler interface {
 type commandHandler struct {
 	messagesInteractor interactor.MessagesInteractor
 	usersInteractor    interactor.UsersInteractor
-	repo               *repository.TgBotRepository
 	log                logger.Logger
 }
 
@@ -30,16 +29,17 @@ func NewCommandHandler(messagesInteractor interactor.MessagesInteractor, usersIn
 }
 
 const commandStart = "start"
-const commandStop = "stop"
 const commandInfo = "info"
-
-//todo вынести в интерфейс (usecase) CommandHandler + реализацию в инфру
+const commandAdminPanel = "admin"
 
 // Главный обработчик всех команд
 func (h *commandHandler) HandleCommand(message *tgbotapi.Message) error {
 	switch message.Command() {
 	case commandStart:
 		return h.handleStartCommand(message)
+
+	case commandAdminPanel:
+		return h.handleAdminPanelCommand(message)
 
 	case commandInfo:
 		return h.handleInfoCommand(message)
@@ -61,13 +61,14 @@ func (h *commandHandler) handleStartCommand(message *tgbotapi.Message) error {
 
 	h.usersInteractor.InsertUser(message.From.FirstName, message.From.LastName, message.Chat.ID)
 
-	text := "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем"
-	err = h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, text, api.Cities)
+	err = h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, "Выберете действие", keyboards.UserMainMenuChoice)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	h.usersInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+
+	return err
 }
 
 // Обрабатывает команду /info
@@ -77,6 +78,20 @@ func (h *commandHandler) handleInfoCommand(message *tgbotapi.Message) error {
 	text := "Бот, отсылающий состояние погоды на текущий момент в разных городах России"
 
 	return h.messagesInteractor.SendMessage(message.Chat.ID, text)
+}
+
+// Обрабатывает команду /admin
+func (h *commandHandler) handleAdminPanelCommand(message *tgbotapi.Message) error {
+	h.log.Infof("Handle admin panel command:%s", message)
+
+	if !h.usersInteractor.IsUserExist(message.Chat.ID) {
+		text := "Вы не автризовались! Пожалуйста, нажмите комманду /start для авторизации"
+		return h.messagesInteractor.SendMessage(message.Chat.ID, text)
+	}
+	h.usersInteractor.SetUserState(message.Chat.ID, domain.Admin_auth_state)
+
+	text := "Введите пароль для админки:"
+	return h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, text)
 }
 
 // Обрабатывает отсутствие известной команды

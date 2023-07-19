@@ -9,6 +9,7 @@ import (
 
 type UsersInteractor interface {
 	InsertUser(firstname, lastname string, chatID int64) error
+	IsUserExist(chatID int64) bool
 	GetUserStateByChatID(chatID int64) string
 	SetUserState(chatID int64, state string) error
 }
@@ -28,7 +29,7 @@ func NewUsersInteractor(repo *repository.TgBotRepository, logger logger.Logger) 
 func (i *usersInteractor) InsertUser(firstname, lastname string, chatID int64) error {
 	if !i.repo.Users.IsExist(chatID) {
 		i.logger.Info("create new user")
-		return i.repo.Users.Create(firstname, lastname, domain.Auth_usr_state, chatID)
+		return i.repo.Users.Create(firstname, lastname, domain.User_auth_state, chatID)
 	} else {
 		i.logger.Info("user already exist. Update last usage")
 		return i.repo.Users.UpdateLastUsage(chatID)
@@ -45,7 +46,7 @@ func (i *usersInteractor) GetUserStateByChatID(chatID int64) string {
 		return state
 	} else {
 		//todo подумать как зарефакторить
-		return domain.Unauth_usr_state
+		return domain.User_unauth_state
 	}
 
 }
@@ -59,4 +60,8 @@ func (i *usersInteractor) SetUserState(chatID int64, state string) error {
 		return errors.New("some error")
 	}
 
+}
+
+func (i *usersInteractor) IsUserExist(chatID int64) bool {
+	return i.repo.Users.IsExist(chatID)
 }

@@ -4,31 +4,39 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"math/rand"
+	"weatherTGBot/internal/domain"
 	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/pkg/logger"
 )
 
 type MessagesInteractor interface {
 	SendMessage(ChatID int64, text string, params ...interface{}) error
-	SendMessageWithKeyboard(ChatID int64, text string, buttons map[string]string) error
+	SendMessageWithKeyboard(ChatID int64, text string, buttons []string) error
 	SendMessageWithRemovingKeyboard(ChatID int64, text string) error
 
-	//todo вынести в отдельный интрактор если распухнет
+	//todo вынести в отдельный интрактор
 	GetStickersByType(stickerType string) []string
 	SendRandomSticker(message *tgbotapi.Message, stickers []string) error
+	GetStickersTypes() []string
+	CreateSticker(sticker *domain.Sticker, categoryTitle string) error
+	StoreStickerCodeByChatId(chatID int64, sticker *domain.Sticker)
+	GetStickerByChatId(chatID int64) *domain.Sticker
+	IsStickerExist(stickerCode string) bool
 }
 
 type messagesInteractor struct {
-	botAPI *tgbotapi.BotAPI
-	repo   *repository.TgBotRepository
-	logger logger.Logger
+	botAPI       *tgbotapi.BotAPI
+	repo         *repository.TgBotRepository
+	logger       logger.Logger
+	stickerStore map[int64]*domain.Sticker
 }
 
 func NewMessagesInteractor(botAPI *tgbotapi.BotAPI, repo *repository.TgBotRepository, logger logger.Logger) MessagesInteractor {
 	return &messagesInteractor{
-		botAPI: botAPI,
-		repo:   repo,
-		logger: logger,
+		botAPI:       botAPI,
+		repo:         repo,
+		logger:       logger,
+		stickerStore: make(map[int64]*domain.Sticker),
 	}
 }
 
@@ -45,22 +53,22 @@ func (i *messagesInteractor) SendMessage(ChatID int64, text string, params ...in
 
 // Инициализирует клавиатуру с кнопками
 // todo подумать как можно запилить клавиатуру в 2 строки
-func (i *messagesInteractor) initKeyboard(buttons map[string]string) tgbotapi.ReplyKeyboardMarkup {
+func (i *messagesInteractor) initKeyboard(buttons []string) tgbotapi.ReplyKeyboardMarkup {
 	if len(buttons) <= 0 {
 		i.logger.Error("Empty Keyboard!")
 	}
 	var Keyboard = tgbotapi.NewReplyKeyboard()
 
-	for key, _ := range buttons {
+	for _, val := range buttons {
 		Keyboard.Keyboard = append(Keyboard.Keyboard, tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(key),
+			tgbotapi.NewKeyboardButton(val),
 		))
 	}
 
 	return Keyboard
 }
 
-func (i *messagesInteractor) SendMessageWithKeyboard(ChatID int64, text string, buttons map[string]string) error {
+func (i *messagesInteractor) SendMessageWithKeyboard(ChatID int64, text string, buttons []string) error {
 	msg := tgbotapi.NewMessage(ChatID, text)
 	msg.ReplyMarkup = i.initKeyboard(buttons)
 	_, err := i.botAPI.Send(msg)
@@ -92,4 +100,27 @@ func (i *messagesInteractor) SendRandomSticker(message *tgbotapi.Message, sticke
 	_, err := i.botAPI.Send(msg)
 
 	return err
+}
+
+func (i *messagesInteractor) GetStickersTypes() []string {
+	return i.repo.Stickers.GetStickerTypes()
+}
+
+func (i *messagesInteractor) CreateSticker(sticker *domain.Sticker, categoryTitle string) error {
+	return i.repo.Stickers.CreateSticker(sticker.Name, sticker.Code, categoryTitle)
+}
+
+func (i *messagesInteractor) StoreStickerCodeByChatId(chatID int64, sticker *domain.Sticker) {
+	i.stickerStore[chatID] = sticker
+}
+
+func (i *messagesInteractor) GetStickerByChatId(chatID int64) *domain.Sticker {
+	if code, ok := i.stickerStore[chatID]; ok {
+		return code
+	}
+	return nil
+}
+
+func (i *messagesInteractor) IsStickerExist(stickerCode string) bool {
+	return i.repo.Stickers.IsStickerExist(stickerCode)
 }

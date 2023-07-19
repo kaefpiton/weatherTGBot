@@ -28,13 +28,13 @@ func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *reposi
 	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor)
 	usersInteractor := interactor.NewUsersInteractor(repo, logger)
 	tgbot.commandHandler = handlers.NewCommandHandler(messagesInteractor, usersInteractor, logger)
-	tgbot.messageHandler = handlers.NewMessageHandler(botApi, messagesInteractor, weatherInteractor, usersInteractor, repo, logger)
+	tgbot.messageHandler = handlers.NewMessageHandler(messagesInteractor, weatherInteractor, usersInteractor, logger)
 
 	return tgbot
 }
 
 func (b *Bot) Start() error {
-	b.logger.Infof("Authorized on account: %v", b.bot.Self.UserName)
+	b.logger.Infof("Bot authorised on account: %v", b.bot.Self.UserName)
 
 	updates, err := b.initUpdatesChannel()
 	if err != nil {
