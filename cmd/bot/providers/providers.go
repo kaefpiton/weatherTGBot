@@ -35,7 +35,7 @@ func ProvideFileLogger(cnf *config.Config) (logger.Logger, func(), error) {
 	return zerolog.NewZeroLog(ioWriter, cnf.Logger.Lvl), closeFn, nil
 }
 
-func ProvideDB(cnf *config.Config, logger logger.Logger) (*postgres.DB, func(), error) {
+func ProvideDB(cnf *config.Config) (*postgres.DB, func(), error) {
 	var closeFn = func() {}
 
 	db, err := postgres.NewDBConnection(cnf)

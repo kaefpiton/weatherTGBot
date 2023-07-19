@@ -55,7 +55,7 @@ func initService(cnf *config.Config) (func(), error) {
 	}
 
 	//TGBotRepository
-	db, DBcloser, err := providers.ProvideDB(cnf, logger)
+	db, DBcloser, err := providers.ProvideDB(cnf)
 	if err != nil {
 		return nil, err
 	}

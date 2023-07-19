@@ -2,8 +2,10 @@ package interactor
 
 import (
 	"errors"
+	"fmt"
 	"weatherTGBot/internal/domain"
 	"weatherTGBot/internal/infrastructure/repository"
+	repository2 "weatherTGBot/internal/usecase/repository"
 	"weatherTGBot/pkg/logger"
 )
 
@@ -15,14 +17,16 @@ type UsersInteractor interface {
 }
 
 type usersInteractor struct {
-	repo   *repository.TgBotRepository
-	logger logger.Logger
+	repo                   *repository.TgBotRepository
+	usersStateInmemoryRepo repository2.Inmemory
+	logger                 logger.Logger
 }
 
-func NewUsersInteractor(repo *repository.TgBotRepository, logger logger.Logger) UsersInteractor {
+func NewUsersInteractor(repo *repository.TgBotRepository, usersStateInmemoryRepo repository2.Inmemory, logger logger.Logger) UsersInteractor {
 	return &usersInteractor{
-		repo:   repo,
-		logger: logger,
+		repo:                   repo,
+		usersStateInmemoryRepo: usersStateInmemoryRepo,
+		logger:                 logger,
 	}
 }
 
@@ -36,8 +40,12 @@ func (i *usersInteractor) InsertUser(firstname, lastname string, chatID int64) e
 	}
 }
 
-// todo прикрутить еще кеш
 func (i *usersInteractor) GetUserStateByChatID(chatID int64) string {
+	userStateFromCache := i.getUserStateFromCache(chatID)
+	if userStateFromCache != "" {
+		return userStateFromCache
+	}
+
 	if i.repo.Users.IsExist(chatID) {
 		state, err := i.repo.Users.GetUserStateByChatID(chatID)
 		if err != nil {
@@ -48,20 +56,30 @@ func (i *usersInteractor) GetUserStateByChatID(chatID int64) string {
 		//todo подумать как зарефакторить
 		return domain.User_unauth_state
 	}
-
 }
 
-// todo прикрутить еще кеш
 func (i *usersInteractor) SetUserState(chatID int64, state string) error {
 	if i.repo.Users.IsExist(chatID) {
+		//todo сгружать в бд состояние через какое - то время
+		i.usersStateInmemoryRepo.Set(chatID, state)
 		return i.repo.Users.SetUserState(chatID, state)
 	} else {
-		//todo refactor err name
-		return errors.New("some error")
+		return errors.New("user not exist in app")
 	}
 
 }
 
 func (i *usersInteractor) IsUserExist(chatID int64) bool {
 	return i.repo.Users.IsExist(chatID)
+}
+
+// todo зарефакторить с дженериками
+func (i *usersInteractor) getUserStateFromCache(chatID int64) string {
+	data := i.usersStateInmemoryRepo.Get(chatID)
+
+	if data != nil {
+		return fmt.Sprint(data)
+	}
+
+	return ""
 }

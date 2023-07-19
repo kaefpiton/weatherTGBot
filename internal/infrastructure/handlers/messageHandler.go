@@ -61,7 +61,7 @@ func (h *messageHandler) HandleMessage(message *tgbotapi.Message) error {
 	case domain.Admin_set_sticker_state:
 		return h.handleAdminSetSticker(message)
 
-	case domain.Admin_set_sticker_category:
+	case domain.Admin_set_sticker_category_state:
 		return h.handleAdminSetStickerCategory(message)
 
 	default:
@@ -173,7 +173,7 @@ func (h *messageHandler) handleAdminSetSticker(message *tgbotapi.Message) error 
 		sticker := domain.NewSticker(message.Sticker.SetName, message.Sticker.FileID)
 		h.messagesInteractor.StoreStickerCodeByChatId(message.Chat.ID, sticker)
 
-		err := h.userInteractor.SetUserState(message.Chat.ID, domain.Admin_set_sticker_category)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.Admin_set_sticker_category_state)
 		if err != nil {
 			return err
 		}

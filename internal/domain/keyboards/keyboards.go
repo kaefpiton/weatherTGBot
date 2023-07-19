@@ -1,8 +1,5 @@
 package keyboards
 
-// todo переименовать в keyboard  и константно задать кнопки
-// todo сделать слайсами
-
 // Общие кнопки
 const ExitButton = "выйти"
 

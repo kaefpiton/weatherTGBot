@@ -17,7 +17,10 @@ type Bot struct {
 	logger         logger.Logger
 }
 
-func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *repository.TgBotRepository, logger logger.Logger) *Bot {
+func NewBot(botApi *tgbotapi.BotAPI,
+	weatherApi weather.WeatherApi,
+	repo *repository.TgBotRepository,
+	logger logger.Logger) *Bot {
 	tgbot := &Bot{
 		bot:    botApi,
 		repo:   repo,
@@ -26,7 +29,8 @@ func NewBot(botApi *tgbotapi.BotAPI, weatherApi weather.WeatherApi, repo *reposi
 
 	messagesInteractor := interactor.NewMessagesInteractor(botApi, repo, logger)
 	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor)
-	usersInteractor := interactor.NewUsersInteractor(repo, logger)
+	usersStateInmemoryRepo := repository.NewUsersStatesInmemoryRepository()
+	usersInteractor := interactor.NewUsersInteractor(repo, usersStateInmemoryRepo, logger)
 	tgbot.commandHandler = handlers.NewCommandHandler(messagesInteractor, usersInteractor, logger)
 	tgbot.messageHandler = handlers.NewMessageHandler(messagesInteractor, weatherInteractor, usersInteractor, logger)
 

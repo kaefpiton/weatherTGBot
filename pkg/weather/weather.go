@@ -13,16 +13,15 @@ type WeatherApi interface {
 	GetWindSpeed() float64
 	GetCloudPercentage() int
 	GetHumidity() int
-	SetOptions(options WeatherOptions) error
+	SetOptions(options Options) error
 }
 
-// todo при выносе сократить до options
-type WeatherOptions struct {
+type Options struct {
 	City string
 }
 
-func NewWeatherOptions(city string) WeatherOptions {
-	return WeatherOptions{
+func NewWeatherOptions(city string) Options {
+	return Options{
 		City: city,
 	}
 }
@@ -72,7 +71,7 @@ func (w *openWeatherMapApi) GetHumidity() int {
 	return w.weatherAPI.Main.Humidity
 }
 
-func (w *openWeatherMapApi) SetOptions(options WeatherOptions) error {
+func (w *openWeatherMapApi) SetOptions(options Options) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	return w.weatherAPI.CurrentByName(options.City)
