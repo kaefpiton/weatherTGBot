@@ -1,4 +1,4 @@
-package api
+package cities
 
 import (
 	"weatherTGBot/internal/infrastructure/repository"

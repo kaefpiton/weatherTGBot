@@ -2,13 +2,13 @@ package interactor
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"weatherTGBot/internal/domain/api"
+	weather2 "weatherTGBot/internal/domain/weather"
 	"weatherTGBot/pkg/weather"
 )
 
 type WeatherInteractor interface {
-	GetWeatherByCity(city string) (*api.Weather, error)
-	SendWeather(message *tgbotapi.Message, weather *api.Weather) error
+	GetWeatherByCity(city string) (*weather2.Weather, error)
+	SendWeather(message *tgbotapi.Message, weather *weather2.Weather) error
 }
 
 type weatherInteractor struct {
@@ -23,13 +23,13 @@ func NewWeatherInteractor(weatherApi weather.WeatherApi, messagesInteractor Mess
 	}
 }
 
-func (i *weatherInteractor) GetWeatherByCity(city string) (*api.Weather, error) {
+func (i *weatherInteractor) GetWeatherByCity(city string) (*weather2.Weather, error) {
 	weatherOptions := weather.NewWeatherOptions(city)
 	if err := i.weatherApi.SetOptions(weatherOptions); err != nil {
 		return nil, err
 	}
 
-	return &api.Weather{
+	return &weather2.Weather{
 		Temperature:          i.weatherApi.GetTemperature(),
 		TemperatureFeelsLike: i.weatherApi.GetTemperatureFeelsLike(),
 		Pressure:             i.weatherApi.GetPressure(),
@@ -45,7 +45,7 @@ func (i *weatherInteractor) setOptions(city string) error {
 }
 
 // Главный метод. Отсылает все, что есть
-func (i *weatherInteractor) SendWeather(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) SendWeather(message *tgbotapi.Message, weather *weather2.Weather) error {
 
 	if err := i.sendTemperature(message, weather); err != nil {
 		return err
@@ -66,7 +66,7 @@ func (i *weatherInteractor) SendWeather(message *tgbotapi.Message, weather *api.
 // Отсылает температуру
 const teperatureMessage = "В городе %s температура %.1f °C. Ощущается как %.1f °C."
 
-func (i *weatherInteractor) sendTemperature(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendTemperature(message *tgbotapi.Message, weather *weather2.Weather) error {
 	city := message.Text
 	temp := weather.Temperature
 	feelsLike := weather.TemperatureFeelsLike
@@ -82,7 +82,7 @@ func (i *weatherInteractor) sendTemperature(message *tgbotapi.Message, weather *
 // Отсылает давление
 const presureMessage = "Атмосферное давление %.2f мм ртутного столба"
 
-func (i *weatherInteractor) sendPressure(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendPressure(message *tgbotapi.Message, weather *weather2.Weather) error {
 	err := i.messagesInteractor.SendMessage(message.Chat.ID, presureMessage, weather.Pressure)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (i *weatherInteractor) sendPressure(message *tgbotapi.Message, weather *api
 // Отсылает скорость ветра
 const windSpeedMessage = "Скорость ветра  %.2f м/с"
 
-func (i *weatherInteractor) sendWindSpeed(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendWindSpeed(message *tgbotapi.Message, weather *weather2.Weather) error {
 	err := i.messagesInteractor.SendMessage(message.Chat.ID, windSpeedMessage, weather.WindSpeed)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (i *weatherInteractor) sendWindSpeed(message *tgbotapi.Message, weather *ap
 // Отсылает дополнительную статистику о погоде
 const additionalInfoMessage = "Облачность =  %d%v \nВлажность = %d%v \n"
 
-func (i *weatherInteractor) sendAdditionalInfo(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendAdditionalInfo(message *tgbotapi.Message, weather *weather2.Weather) error {
 	return i.messagesInteractor.SendMessage(message.Chat.ID,
 		additionalInfoMessage,
 		weather.Clouds, "%",
@@ -119,31 +119,31 @@ const normalTemperatureInCelsius = 16
 const coldTemperatureInCelsius = 0
 const frostTemperatureInCelsius = -15
 
-func (i *weatherInteractor) sendTemperatureSticker(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendTemperatureSticker(message *tgbotapi.Message, weather *weather2.Weather) error {
 
 	switch {
 	case weather.Temperature > highTemperatureInCelsius:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.HighTemperature),
+			i.messagesInteractor.GetStickersByType(weather2.HighTemperature),
 		)
 
 	case weather.Temperature > normalTemperatureInCelsius:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.NormalTemperature),
+			i.messagesInteractor.GetStickersByType(weather2.NormalTemperature),
 		)
 
 	case weather.Temperature >= coldTemperatureInCelsius:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.ColdTemperature),
+			i.messagesInteractor.GetStickersByType(weather2.ColdTemperature),
 		)
 
 	case weather.Temperature < frostTemperatureInCelsius:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.FrostTemperature),
+			i.messagesInteractor.GetStickersByType(weather2.FrostTemperature),
 		)
 
 	default:
@@ -154,18 +154,18 @@ func (i *weatherInteractor) sendTemperatureSticker(message *tgbotapi.Message, we
 // Стикеры для давления
 const normalPressureInMmGg = 760
 
-func (i *weatherInteractor) sendPressureSticker(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendPressureSticker(message *tgbotapi.Message, weather *weather2.Weather) error {
 	pressure := weather.Pressure
 
 	if pressure > normalPressureInMmGg {
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.PressureHigh),
+			i.messagesInteractor.GetStickersByType(weather2.PressureHigh),
 		)
 	} else {
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.PressureNormal),
+			i.messagesInteractor.GetStickersByType(weather2.PressureNormal),
 		)
 	}
 }
@@ -175,25 +175,25 @@ const highWindSpeedMps = 14
 const normalWindSpeedMps = 5
 const lowWindSpeedMps = 0
 
-func (i *weatherInteractor) sendWindSpeedSticker(message *tgbotapi.Message, weather *api.Weather) error {
+func (i *weatherInteractor) sendWindSpeedSticker(message *tgbotapi.Message, weather *weather2.Weather) error {
 	windSpeed := weather.WindSpeed
 	switch {
 	case windSpeed > highWindSpeedMps:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.HighWind),
+			i.messagesInteractor.GetStickersByType(weather2.HighWind),
 		)
 
 	case windSpeed > normalWindSpeedMps:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.NormalWind),
+			i.messagesInteractor.GetStickersByType(weather2.NormalWind),
 		)
 
 	case windSpeed > lowWindSpeedMps:
 		return i.messagesInteractor.SendRandomSticker(
 			message,
-			i.messagesInteractor.GetStickersByType(api.LowWind),
+			i.messagesInteractor.GetStickersByType(weather2.LowWind),
 		)
 
 	default:

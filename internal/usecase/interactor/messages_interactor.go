@@ -102,7 +102,6 @@ func (i *messagesInteractor) SendRandomSticker(message *tgbotapi.Message, sticke
 	return err
 }
 
-// todo придумать архитектурно
 func (i *messagesInteractor) GetStickersTypes() []string {
 	result := make([]string, 0)
 

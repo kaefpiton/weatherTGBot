@@ -10,16 +10,6 @@ var UserMainMenuChoice = []string{
 	ExitButton,
 }
 
-const ExitToAdminPanelButton = "выйти в панель админа"
-const AddStickerButton = "добавить новый стикер"
-const ExitToUserPanelButton = "выйти из админки"
-
-var AdminSetSticker = []string{
-	ExitToAdminPanelButton,
-	AddStickerButton,
-	ExitToUserPanelButton,
-}
-
 const SetStickerButton = "задать стикер"
 
 var AdminMainMenuChoice = []string{
@@ -30,7 +20,7 @@ var AdminMainMenuChoice = []string{
 func GetCustomKeyboard(buttons map[string]string) []string {
 	result := make([]string, 0)
 
-	for button, _ := range buttons {
+	for button := range buttons {
 		result = append(result, button)
 	}
 

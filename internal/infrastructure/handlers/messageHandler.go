@@ -5,8 +5,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"os"
 	"weatherTGBot/internal/domain"
-	"weatherTGBot/internal/domain/api"
+	"weatherTGBot/internal/domain/cities"
 	"weatherTGBot/internal/domain/keyboards"
+	"weatherTGBot/internal/domain/weather"
 	"weatherTGBot/internal/usecase/interactor"
 	"weatherTGBot/pkg/logger"
 )
@@ -15,7 +16,7 @@ type MessageHandler interface {
 	HandleMessage(message *tgbotapi.Message) error
 }
 
-type messageHandler struct {
+type MessageHandlerImpl struct {
 	messagesInteractor interactor.MessagesInteractor
 	weatherInteractor  interactor.WeatherInteractor
 	userInteractor     interactor.UsersInteractor
@@ -26,8 +27,8 @@ func NewMessageHandler(
 	messagesInteractor interactor.MessagesInteractor,
 	weatherInteractor interactor.WeatherInteractor,
 	userInteractor interactor.UsersInteractor,
-	logger logger.Logger) *messageHandler {
-	return &messageHandler{
+	logger logger.Logger) *MessageHandlerImpl {
+	return &MessageHandlerImpl{
 		messagesInteractor: messagesInteractor,
 		weatherInteractor:  weatherInteractor,
 		userInteractor:     userInteractor,
@@ -36,7 +37,7 @@ func NewMessageHandler(
 }
 
 // Главный обработчик всех сообщений
-func (h *messageHandler) HandleMessage(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) HandleMessage(message *tgbotapi.Message) error {
 	h.logger.Infof("[%s] %s", message.From.UserName, message.Text)
 
 	state := h.userInteractor.GetUserStateByChatID(message.Chat.ID)
@@ -71,15 +72,21 @@ func (h *messageHandler) HandleMessage(message *tgbotapi.Message) error {
 }
 
 // Обрабатывает главное меню пользователя
-func (h *messageHandler) handleUserChoice(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleUserChoice(message *tgbotapi.Message) error {
 	switch message.Text {
 	case keyboards.ShowWeatherButton:
-		h.userInteractor.SetUserState(message.Chat.ID, domain.User_city_choice_state)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.User_city_choice_state)
+		if err != nil {
+			return err
+		}
 		text := "Выберете город на клавиатуре, чтобы узнать состояние погоды в нем"
-		return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, text, keyboards.GetCustomKeyboard(api.Cities))
+		return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, text, keyboards.GetCustomKeyboard(cities.Cities))
 
 	case keyboards.ExitButton:
-		h.userInteractor.SetUserState(message.Chat.ID, domain.User_unauth_state)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.User_unauth_state)
+		if err != nil {
+			return err
+		}
 		//todo сделать красивую менюшку
 		return h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, "Вы вышли из бота!")
 
@@ -89,13 +96,16 @@ func (h *messageHandler) handleUserChoice(message *tgbotapi.Message) error {
 }
 
 // Обрабатывает сообщение с выбором города для погоды
-func (h *messageHandler) handleCityChoiceMessage(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleCityChoiceMessage(message *tgbotapi.Message) error {
 	if message.Text == keyboards.ExitButton {
-		h.userInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+		if err != nil {
+			return err
+		}
 		return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, "Выберете действие", keyboards.UserMainMenuChoice)
 	}
 
-	if _, ok := api.Cities[message.Text]; !ok {
+	if _, ok := cities.Cities[message.Text]; !ok {
 		return h.messagesInteractor.SendMessage(message.Chat.ID, "Вы не выбрали город из предложенных!")
 	}
 
@@ -112,33 +122,46 @@ func (h *messageHandler) handleCityChoiceMessage(message *tgbotapi.Message) erro
 		return fmt.Errorf("err get weather by city:%v", err)
 	}
 
-	h.weatherInteractor.SendWeather(message, weather)
+	err = h.weatherInteractor.SendWeather(message, weather)
+	if err != nil {
+		return err
+	}
 
-	h.userInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+	err = h.userInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+	if err != nil {
+		return err
+	}
 
 	//todo узнать как можно без сообщения вызывать клавиатуру
 	return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, "Выберете действие", keyboards.UserMainMenuChoice)
 }
 
 // Обрабатывает сообщение от неавторизованных пользователей
-func (h *messageHandler) handleUnauthorisedUserMessage(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleUnauthorisedUserMessage(message *tgbotapi.Message) error {
 	text := "Вы не автризованы! Пожалуйста, нажмите комманду /start для авторизации"
 	return h.messagesInteractor.SendMessage(message.Chat.ID, text)
 }
 
 // Обрабатывает сообщения авторизации в админку
-func (h *messageHandler) handleAdminAuthorisationMessage(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleAdminAuthorisationMessage(message *tgbotapi.Message) error {
 	switch message.Text {
 	case os.Getenv("BOT_ADMIN_SECRET"):
 		h.logger.Infof("User [%s] enter to admin panel", message.Chat.FirstName)
 
-		h.userInteractor.SetUserState(message.Chat.ID, domain.Admin_enter_state)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.Admin_enter_state)
+		if err != nil {
+			return err
+		}
 
 		text := "Добро пожаловать в админку бота! Выберете действие на клавиатуре"
 		return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, text, keyboards.AdminMainMenuChoice)
 
 	case keyboards.ExitButton:
-		h.userInteractor.SetUserState(message.Chat.ID, domain.User_unauth_state)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.User_unauth_state)
+		if err != nil {
+			return err
+		}
+
 		return h.messagesInteractor.SendMessage(message.Chat.ID, "Нажмите /start для того чтобы узнать состояние погоды")
 
 	default:
@@ -148,15 +171,25 @@ func (h *messageHandler) handleAdminAuthorisationMessage(message *tgbotapi.Messa
 }
 
 // Обрабатывает главное меню администратора
-func (h *messageHandler) handleAdminChoice(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleAdminChoice(message *tgbotapi.Message) error {
 	switch message.Text {
 	case keyboards.SetStickerButton:
-		h.userInteractor.SetUserState(message.Chat.ID, domain.Admin_add_sticker_state)
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.Admin_add_sticker_state)
+		if err != nil {
+			return err
+		}
 		return h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, "Выберете стикер для состояния погоды")
 
 	case keyboards.ExitButton:
-		h.userInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
-		h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, "Вы вышли из админки! Переход в действия пользователя")
+		err := h.userInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+		if err != nil {
+			return err
+		}
+
+		err = h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, "Вы вышли из админки! Переход в действия пользователя")
+		if err != nil {
+			return err
+		}
 		return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, "Выберете действие", keyboards.UserMainMenuChoice)
 
 	default:
@@ -167,7 +200,7 @@ func (h *messageHandler) handleAdminChoice(message *tgbotapi.Message) error {
 const exitText = "exit"
 
 // Обрабатывает выбор стикера для администратора
-func (h *messageHandler) handleAdminSetSticker(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleAdminSetSticker(message *tgbotapi.Message) error {
 	if message.Sticker != nil {
 		if h.messagesInteractor.IsStickerExist(message.Sticker.FileID) {
 			text := "Такой стикер существует в базе, выберете другой стикер"
@@ -188,7 +221,7 @@ func (h *messageHandler) handleAdminSetSticker(message *tgbotapi.Message) error 
 		return h.messagesInteractor.SendMessageWithKeyboard(
 			message.Chat.ID,
 			"Выберете категорию для стикера",
-			keyboards.GetCustomKeyboard(api.WeatherTypes),
+			keyboards.GetCustomKeyboard(weather.WeatherTypes),
 		)
 	}
 
@@ -206,10 +239,10 @@ func (h *messageHandler) handleAdminSetSticker(message *tgbotapi.Message) error 
 }
 
 // Обрабатывает выбор категрии для стикера администратором
-func (h *messageHandler) handleAdminSetStickerCategory(message *tgbotapi.Message) error {
-	if api.IsWeatherType(message.Text) {
+func (h *MessageHandlerImpl) handleAdminSetStickerCategory(message *tgbotapi.Message) error {
+	if weather.IsWeatherType(message.Text) {
 		sticker := h.messagesInteractor.GetStickerByChatId(message.Chat.ID)
-		err := h.messagesInteractor.CreateSticker(sticker, api.WeatherTypes[message.Text])
+		err := h.messagesInteractor.CreateSticker(sticker, weather.WeatherTypes[message.Text])
 		if err != nil {
 			return err
 		}
@@ -255,18 +288,7 @@ func (h *messageHandler) handleAdminSetStickerCategory(message *tgbotapi.Message
 	}
 }
 
-func (h *messageHandler) handleAdminExitFromAddStickerMenu(message *tgbotapi.Message) error {
-	switch message.Text {
-	case keyboards.ExitToAdminPanelButton:
-		return h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, "Переходим в панель админа")
-	case keyboards.AddStickerButton:
-		return h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, "Создаем новый стикер")
-	default:
-		return h.messagesInteractor.SendMessage(message.Chat.ID, "Вы не выбрали действие на клавиатуре")
-	}
-}
-
-func (h *messageHandler) handleDefaultMessage(message *tgbotapi.Message) error {
+func (h *MessageHandlerImpl) handleDefaultMessage(message *tgbotapi.Message) error {
 	h.logger.Warnf("User with ChatID [%d] throw to default case", message.Chat.ID)
 	return nil
 }
