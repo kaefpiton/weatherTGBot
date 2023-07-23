@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"weatherTGBot/cmd/bot/providers"
 	"weatherTGBot/internal/config"
+	"weatherTGBot/internal/domain/api"
 	"weatherTGBot/pkg/telegram"
 )
 
@@ -59,8 +60,10 @@ func initService(cnf *config.Config) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-
 	tgBotRepository := providers.ProvideTgBotRepo(db, logger)
+
+	go api.SetCities(tgBotRepository)
+	go api.SetWeatherTypes(tgBotRepository)
 
 	TelegramBot := telegram.NewBot(bot, weatherApi, tgBotRepository, logger)
 

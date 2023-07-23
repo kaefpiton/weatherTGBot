@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS stickers (
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY(code),
-    CONSTRAINT fk_stickers_types FOREIGN KEY(type_id) REFERENCES sticker_types(ID)
+    CONSTRAINT fk_stickers_types FOREIGN KEY(type_id) REFERENCES weather_types(ID)
     );
 -- +goose StatementEnd
 

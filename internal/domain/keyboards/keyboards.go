@@ -27,4 +27,14 @@ var AdminMainMenuChoice = []string{
 	ExitButton,
 }
 
-//todo добавить клавиатуру городов и стикертайпов
+func GetCustomKeyboard(buttons map[string]string) []string {
+	result := make([]string, 0)
+
+	for button, _ := range buttons {
+		result = append(result, button)
+	}
+
+	result = append(result, ExitButton)
+
+	return result
+}

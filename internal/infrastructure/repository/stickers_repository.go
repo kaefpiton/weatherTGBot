@@ -31,7 +31,7 @@ func (r *StickersRepository) GetStickersCodesByType(stickerType string) ([]strin
 	var stickerCodes []string
 
 	r.mu.RLock()
-	query := "SELECT code FROM stickers JOIN sticker_types type on stickers.type_id = type.id where type.title= $1"
+	query := "SELECT code FROM stickers JOIN weather_types type on stickers.type_id = type.id where type.title= $1"
 	rows, err := r.db.Query(query, stickerType)
 	if err != nil {
 		return nil, err
@@ -64,19 +64,19 @@ func (r *StickersRepository) IsStickerExist(stickerCode string) bool {
 	return exists
 }
 
-func (r *StickersRepository) GetStickerTypes() []string {
-	stickerTypes := make([]string, 0, 0)
+func (r *StickersRepository) GetStickerTypes() []repository.StickerType {
+	stickerTypes := make([]repository.StickerType, 0, 0)
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	rows, err := r.db.Query("SELECT title FROM sticker_types")
+	rows, err := r.db.Query("SELECT title, alias FROM weather_types")
 	if err != nil && err != sql.ErrNoRows {
 		r.logger.Error("error checking if row exists: %v", err)
 	}
 
 	for rows.Next() {
-		var stickerType string
-		err = rows.Scan(&stickerType)
+		var stickerType repository.StickerType
+		err = rows.Scan(&stickerType.Title, &stickerType.Alias)
 		if err != nil {
 			r.logger.Error(err)
 			continue
@@ -93,7 +93,7 @@ func (r *StickersRepository) CreateSticker(title, code, categoryTitle string) er
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, err := r.db.Exec("INSERT INTO stickers (title, code, type_id) select $1,$2,id from sticker_types where title = $3;",
+	_, err := r.db.Exec("INSERT INTO stickers (title, code, type_id) select $1,$2,id from weather_types where title = $3;",
 		title,
 		code,
 		categoryTitle)

@@ -41,11 +41,7 @@ func (i *weatherInteractor) GetWeatherByCity(city string) (*api.Weather, error) 
 
 func (i *weatherInteractor) setOptions(city string) error {
 	weatherOptions := weather.NewWeatherOptions(city)
-	if err := i.weatherApi.SetOptions(weatherOptions); err != nil {
-		return err
-	}
-
-	return nil
+	return i.weatherApi.SetOptions(weatherOptions)
 }
 
 // Главный метод. Отсылает все, что есть
@@ -68,12 +64,14 @@ func (i *weatherInteractor) SendWeather(message *tgbotapi.Message, weather *api.
 }
 
 // Отсылает температуру
+const teperatureMessage = "В городе %s температура %.1f °C. Ощущается как %.1f °C."
+
 func (i *weatherInteractor) sendTemperature(message *tgbotapi.Message, weather *api.Weather) error {
 	city := message.Text
 	temp := weather.Temperature
 	feelsLike := weather.TemperatureFeelsLike
 
-	err := i.messagesInteractor.SendMessage(message.Chat.ID, "В городе %s температура %.1f °C. Ощущается как %.1f °C.", city, temp, feelsLike)
+	err := i.messagesInteractor.SendMessage(message.Chat.ID, teperatureMessage, city, temp, feelsLike)
 	if err != nil {
 		return err
 	}
@@ -82,8 +80,10 @@ func (i *weatherInteractor) sendTemperature(message *tgbotapi.Message, weather *
 }
 
 // Отсылает давление
+const presureMessage = "Атмосферное давление %.2f мм ртутного столба"
+
 func (i *weatherInteractor) sendPressure(message *tgbotapi.Message, weather *api.Weather) error {
-	err := i.messagesInteractor.SendMessage(message.Chat.ID, "Атмосферное давление %.2f мм ртутного столба", weather.Pressure)
+	err := i.messagesInteractor.SendMessage(message.Chat.ID, presureMessage, weather.Pressure)
 	if err != nil {
 		return err
 	}
@@ -92,8 +92,10 @@ func (i *weatherInteractor) sendPressure(message *tgbotapi.Message, weather *api
 }
 
 // Отсылает скорость ветра
+const windSpeedMessage = "Скорость ветра  %.2f м/с"
+
 func (i *weatherInteractor) sendWindSpeed(message *tgbotapi.Message, weather *api.Weather) error {
-	err := i.messagesInteractor.SendMessage(message.Chat.ID, "Скорость ветра  %.2f м/с", weather.WindSpeed)
+	err := i.messagesInteractor.SendMessage(message.Chat.ID, windSpeedMessage, weather.WindSpeed)
 	if err != nil {
 		return err
 	}
@@ -102,28 +104,47 @@ func (i *weatherInteractor) sendWindSpeed(message *tgbotapi.Message, weather *ap
 }
 
 // Отсылает дополнительную статистику о погоде
+const additionalInfoMessage = "Облачность =  %d%v \nВлажность = %d%v \n"
+
 func (i *weatherInteractor) sendAdditionalInfo(message *tgbotapi.Message, weather *api.Weather) error {
 	return i.messagesInteractor.SendMessage(message.Chat.ID,
-		"Облачность =  %d%v \nВлажность = %d%v \n",
+		additionalInfoMessage,
 		weather.Clouds, "%",
 		weather.Humidity, "%")
 }
 
 // Стикеры для температуры
+const highTemperatureInCelsius = 27
+const normalTemperatureInCelsius = 16
+const coldTemperatureInCelsius = 0
+const frostTemperatureInCelsius = -15
+
 func (i *weatherInteractor) sendTemperatureSticker(message *tgbotapi.Message, weather *api.Weather) error {
 
 	switch {
-	case weather.Temperature > 27:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("high temperature"))
+	case weather.Temperature > highTemperatureInCelsius:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.HighTemperature),
+		)
 
-	case weather.Temperature > 16:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("normal temperature"))
+	case weather.Temperature > normalTemperatureInCelsius:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.NormalTemperature),
+		)
 
-	case weather.Temperature >= 0:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("cold temperature"))
+	case weather.Temperature >= coldTemperatureInCelsius:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.ColdTemperature),
+		)
 
-	case weather.Temperature < 0:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("frost temperature"))
+	case weather.Temperature < frostTemperatureInCelsius:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.FrostTemperature),
+		)
 
 	default:
 		return nil
@@ -131,33 +152,49 @@ func (i *weatherInteractor) sendTemperatureSticker(message *tgbotapi.Message, we
 }
 
 // Стикеры для давления
+const normalPressureInMmGg = 760
+
 func (i *weatherInteractor) sendPressureSticker(message *tgbotapi.Message, weather *api.Weather) error {
 	pressure := weather.Pressure
 
-	if pressure > 760 {
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("pressure high"))
+	if pressure > normalPressureInMmGg {
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.PressureHigh),
+		)
 	} else {
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("pressure normal"))
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.PressureNormal),
+		)
 	}
 }
 
 // Стикеры скорости для ветра
+const highWindSpeedMps = 14
+const normalWindSpeedMps = 5
+const lowWindSpeedMps = 0
+
 func (i *weatherInteractor) sendWindSpeedSticker(message *tgbotapi.Message, weather *api.Weather) error {
 	windSpeed := weather.WindSpeed
-
-	const highWindSpeed = 14
-	const normalWindSpeed = 5
-	const lowWindSpeed = 0
-
 	switch {
-	case windSpeed > highWindSpeed:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("high wind"))
+	case windSpeed > highWindSpeedMps:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.HighWind),
+		)
 
-	case windSpeed > normalWindSpeed:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("normal wind"))
+	case windSpeed > normalWindSpeedMps:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.NormalWind),
+		)
 
-	case windSpeed > lowWindSpeed:
-		return i.messagesInteractor.SendRandomSticker(message, i.messagesInteractor.GetStickersByType("low wind"))
+	case windSpeed > lowWindSpeedMps:
+		return i.messagesInteractor.SendRandomSticker(
+			message,
+			i.messagesInteractor.GetStickersByType(api.LowWind),
+		)
 
 	default:
 		return nil

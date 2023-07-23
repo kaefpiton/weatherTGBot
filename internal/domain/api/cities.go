@@ -1,18 +1,18 @@
 package api
 
-// todo при инициализации приложения брать из базы и добавлять в кеш, а пока так
-var Cities = map[string]string{
-	"Москва":    "Moscow",
-	"Ростов":    "Rostov",
-	"Агалатово": "Agalatovo",
-	"Минск":     "Minsk",
-}
+import (
+	"weatherTGBot/internal/infrastructure/repository"
+)
 
-// todo зарефакторить это
-func GetCitiesKeys(cities map[string]string) []string {
-	result := make([]string, 0, 0)
-	for k, _ := range cities {
-		result = append(result, k)
+var Cities = map[string]string{}
+
+func SetCities(repo *repository.TgBotRepository) {
+	cities, err := repo.Cities.GetCites()
+	if err != nil {
+		panic(err)
 	}
-	return result
+
+	for _, city := range cities {
+		Cities[city.Alias] = city.Title
+	}
 }
