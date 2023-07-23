@@ -66,7 +66,7 @@ func (h *commandHandler) handleStartCommand(message *tgbotapi.Message) error {
 		return err
 	}
 
-	h.usersInteractor.SetUserState(message.Chat.ID, domain.User_auth_state)
+	h.usersInteractor.SetUserState(message.Chat.ID, domain.UserAuthState)
 
 	return err
 }
@@ -88,7 +88,7 @@ func (h *commandHandler) handleAdminPanelCommand(message *tgbotapi.Message) erro
 		text := "Вы не автризовались! Пожалуйста, нажмите комманду /start для авторизации"
 		return h.messagesInteractor.SendMessage(message.Chat.ID, text)
 	}
-	h.usersInteractor.SetUserState(message.Chat.ID, domain.Admin_auth_state)
+	h.usersInteractor.SetUserState(message.Chat.ID, domain.AdminAuthState)
 
 	text := "Введите пароль для админки:"
 	return h.messagesInteractor.SendMessageWithRemovingKeyboard(message.Chat.ID, text)

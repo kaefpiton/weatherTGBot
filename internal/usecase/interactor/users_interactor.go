@@ -33,7 +33,7 @@ func NewUsersInteractor(repo *repository.TgBotRepository, usersStateInmemoryRepo
 func (i *usersInteractor) InsertUser(firstname, lastname string, chatID int64) error {
 	if !i.repo.Users.IsExist(chatID) {
 		i.logger.Info("create new user")
-		return i.repo.Users.Create(firstname, lastname, domain.User_auth_state, chatID)
+		return i.repo.Users.Create(firstname, lastname, domain.UserAuthState, chatID)
 	} else {
 		i.logger.Info("user already exist. Update last usage")
 		return i.repo.Users.UpdateLastUsage(chatID)
@@ -54,7 +54,7 @@ func (i *usersInteractor) GetUserStateByChatID(chatID int64) string {
 		return state
 	} else {
 		//todo подумать как зарефакторить
-		return domain.User_unauth_state
+		return domain.UserUnauthorisedState
 	}
 }
 

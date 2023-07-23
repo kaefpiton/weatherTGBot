@@ -64,7 +64,7 @@ func (r *UsersRepository) GetUserStateByChatID(chatID int64) (string, error) {
 	err := row.Scan(&state)
 	if err != nil {
 		//todo может возвращать стейт с
-		return domain.Err_usr_state, err
+		return domain.ErrorUserState, err
 	}
 
 	return state, nil
