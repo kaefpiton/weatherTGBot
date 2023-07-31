@@ -8,8 +8,22 @@ CREATE TABLE IF NOT EXISTS users (
     last_usage timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY(chat_id)
     );
+
+    CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+    RETURNS TRIGGER AS $$
+    BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    CREATE TRIGGER set_timestamp
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE PROCEDURE trigger_set_timestamp();
 -- +goose StatementEnd
 
 -- +goose Down
