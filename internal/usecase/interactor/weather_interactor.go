@@ -3,6 +3,7 @@ package interactor
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	weather2 "weatherTGBot/internal/domain/weather"
+	repository2 "weatherTGBot/internal/usecase/repository"
 	"weatherTGBot/pkg/weather"
 )
 
@@ -14,29 +15,39 @@ type WeatherInteractor interface {
 type weatherInteractor struct {
 	weatherApi         weather.WeatherApi
 	messagesInteractor MessagesInteractor
+	ttl                repository2.TLLRepository
 }
 
-func NewWeatherInteractor(weatherApi weather.WeatherApi, messagesInteractor MessagesInteractor) WeatherInteractor {
+func NewWeatherInteractor(weatherApi weather.WeatherApi, messagesInteractor MessagesInteractor, ttl repository2.TLLRepository) WeatherInteractor {
 	return &weatherInteractor{
 		weatherApi:         weatherApi,
 		messagesInteractor: messagesInteractor,
+		ttl:                ttl,
 	}
 }
 
 func (i *weatherInteractor) GetWeatherByCity(city string) (*weather2.Weather, error) {
+	if w, ok := i.ttl.Get(city); ok {
+		cache := w.Value.(*weather2.Weather)
+		return cache, nil
+	}
+
 	weatherOptions := weather.NewWeatherOptions(city)
 	if err := i.weatherApi.SetOptions(weatherOptions); err != nil {
 		return nil, err
 	}
 
-	return &weather2.Weather{
+	w := &weather2.Weather{
 		Temperature:          i.weatherApi.GetTemperature(),
 		TemperatureFeelsLike: i.weatherApi.GetTemperatureFeelsLike(),
 		Pressure:             i.weatherApi.GetPressure(),
 		WindSpeed:            i.weatherApi.GetWindSpeed(),
 		Clouds:               i.weatherApi.GetCloudPercentage(),
 		Humidity:             i.weatherApi.GetHumidity(),
-	}, nil
+	}
+	i.ttl.Put(city, repository2.CreateItem(w))
+
+	return w, nil
 }
 
 func (i *weatherInteractor) setOptions(city string) error {

@@ -63,10 +63,13 @@ func initService(cnf *config.Config) (func(), error) {
 	}
 	tgBotRepository := providers.ProvideTgBotRepo(db, logger)
 
+	//ttl
+	ttl, ttlCloser := providers.ProvideTTLRepo(cnf)
+
 	go cities.SetCities(tgBotRepository)
 	go weather.SetWeatherTypes(tgBotRepository)
 
-	TelegramBot := telegram.NewBot(bot, weatherApi, tgBotRepository, logger)
+	TelegramBot := telegram.NewBot(bot, weatherApi, tgBotRepository, ttl, logger)
 
 	if err = TelegramBot.Start(); err != nil {
 		return nil, err
@@ -76,6 +79,7 @@ func initService(cnf *config.Config) (func(), error) {
 		fmt.Println("Start cleaning")
 		TelegramBot.Stop()
 		DBcloser()
+		ttlCloser()
 		//Если юзать логгер с файлом, то закрывать сессию тоже
 	}
 

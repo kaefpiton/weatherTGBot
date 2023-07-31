@@ -32,7 +32,7 @@ func (h *MessageHandlerImpl) handleAdminAuthorisationMessage(message *tgbotapi.M
 
 	default:
 		h.logger.Warnf("User: [%s] failed enter to admin panel:", message.Chat.FirstName)
-		return h.messagesInteractor.SendMessage(message.Chat.ID, "Неверный пароль! Попробуйте еще раз или введите exit для выхода")
+		return h.messagesInteractor.SendMessage(message.Chat.ID, "Неверный пароль! Попробуйте еще раз или введите \"выйти\" для выхода")
 	}
 }
 
@@ -63,7 +63,7 @@ func (h *MessageHandlerImpl) handleAdminChoice(message *tgbotapi.Message) error 
 	}
 }
 
-const exitText = "exit"
+const exitText = "выйти"
 
 // Обрабатывает выбор стикера для администратора
 func (h *MessageHandlerImpl) handleAdminSetSticker(message *tgbotapi.Message) error {
@@ -99,8 +99,8 @@ func (h *MessageHandlerImpl) handleAdminSetSticker(message *tgbotapi.Message) er
 		}
 		return h.messagesInteractor.SendMessageWithKeyboard(message.Chat.ID, "Выберете действие", keyboards.AdminMainMenuChoice)
 	default:
-		//todo вынести "введите exit для выхода"
-		return h.messagesInteractor.SendMessage(message.Chat.ID, "Вы не выбрали стикер! введите стикер или exit для выхода")
+		text := "Вы не выбрали стикер! введите стикер или \"выйти\" для выхода"
+		return h.messagesInteractor.SendMessage(message.Chat.ID, text)
 	}
 }
 

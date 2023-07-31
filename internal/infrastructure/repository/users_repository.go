@@ -63,7 +63,7 @@ func (r *UsersRepository) GetUserStateByChatID(chatID int64) (string, error) {
 	row := r.db.QueryRow(query, chatID)
 	err := row.Scan(&state)
 	if err != nil {
-		//todo может возвращать стейт с
+		//todo может возвращать дефолтный стейт
 		return domain.ErrorUserState, err
 	}
 

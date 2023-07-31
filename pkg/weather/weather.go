@@ -5,7 +5,6 @@ import (
 	"sync"
 )
 
-// todo вынести
 type WeatherApi interface {
 	GetTemperature() float64
 	GetTemperatureFeelsLike() float64

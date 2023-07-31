@@ -5,6 +5,7 @@ import (
 	"weatherTGBot/internal/infrastructure/handlers"
 	"weatherTGBot/internal/infrastructure/repository"
 	"weatherTGBot/internal/usecase/interactor"
+	repository2 "weatherTGBot/internal/usecase/repository"
 	"weatherTGBot/pkg/logger"
 	"weatherTGBot/pkg/weather"
 )
@@ -20,6 +21,7 @@ type Bot struct {
 func NewBot(botApi *tgbotapi.BotAPI,
 	weatherApi weather.WeatherApi,
 	repo *repository.TgBotRepository,
+	ttl repository2.TLLRepository,
 	logger logger.Logger) *Bot {
 	tgbot := &Bot{
 		bot:    botApi,
@@ -28,7 +30,7 @@ func NewBot(botApi *tgbotapi.BotAPI,
 	}
 
 	messagesInteractor := interactor.NewMessagesInteractor(botApi, repo, logger)
-	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor)
+	weatherInteractor := interactor.NewWeatherInteractor(weatherApi, messagesInteractor, ttl)
 	usersStateInmemoryRepo := repository.NewUsersStatesInmemoryRepository()
 	usersInteractor := interactor.NewUsersInteractor(repo, usersStateInmemoryRepo, logger)
 	tgbot.commandHandler = handlers.NewCommandHandler(messagesInteractor, usersInteractor, logger)

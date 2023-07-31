@@ -73,7 +73,6 @@ func (i *usersInteractor) IsUserExist(chatID int64) bool {
 	return i.repo.Users.IsExist(chatID)
 }
 
-// todo зарефакторить с дженериками
 func (i *usersInteractor) getUserStateFromCache(chatID int64) string {
 	data := i.usersStateInmemoryRepo.Get(chatID)
 

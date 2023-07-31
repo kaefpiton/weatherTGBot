@@ -5,7 +5,9 @@ import (
 	"os"
 	"weatherTGBot/internal/config"
 	"weatherTGBot/internal/infrastructure/repository"
+	repository2 "weatherTGBot/internal/usecase/repository"
 	"weatherTGBot/pkg/db/postgres"
+	"weatherTGBot/pkg/db/ttl"
 	"weatherTGBot/pkg/logger"
 	"weatherTGBot/pkg/logger/zerolog"
 	"weatherTGBot/pkg/weather"
@@ -71,4 +73,8 @@ func ProvideBotApi(cnf *config.Config) (*tgbotapi.BotAPI, error) {
 	botApi.Debug = cnf.TelegramApi.Debug
 
 	return botApi, err
+}
+
+func ProvideTTLRepo(cnf *config.Config) (repository2.TLLRepository, func()) {
+	return ttl.NewTTLRepository(cnf.Weather.CacheExpireMinutes, cnf.Weather.CheckCacheExpireEverySecond)
 }

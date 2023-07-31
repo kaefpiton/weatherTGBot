@@ -23,6 +23,7 @@ type Config struct {
 		Unit   string `json:"unit"`
 		Lang   string `json:"lang"`
 	}
+
 	TelegramApi struct {
 		APIKey string `json:"telegram_api_key"`
 		Debug  bool   `json:"debug"`
@@ -31,6 +32,11 @@ type Config struct {
 	Logger struct {
 		Lvl      string `json:"lvl"`
 		FilePath string `json:"filePath"`
+	}
+
+	Weather struct {
+		CacheExpireMinutes          int `json:"cacheExpireMinutes"`
+		CheckCacheExpireEverySecond int `json:"checkCacheExpireEverySecond"`
 	}
 }
 
